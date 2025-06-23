@@ -2,7 +2,7 @@
 
 interface
 
-uses System, System.Drawing, System.Windows.Forms, System.Threading, server, client, types;
+uses System, System.Drawing, System.Windows.Forms, System.Threading, explorer, server, client, types;
 
 type ApplicationState = (SERVER, CLIENT);
 
@@ -38,7 +38,7 @@ type
     clientConnectButton: Button;
     ClientIPMask: MaskedTextBox;
     clientConnectState: &Label;
-    imageList1: ImageList;
+    IconList25: ImageList;
     components: System.ComponentModel.IContainer;
     splitContainer1: SplitContainer;
     ClientControlTab: TabControl;
@@ -47,6 +47,10 @@ type
     ExplorerTab: TabPage;
     CountOfClientsLabel: &Label;
     contextMenuStrip1: System.Windows.Forms.ContextMenuStrip;
+    IconList50: ImageList;
+    splitContainer2: SplitContainer;
+    label2: &Label;
+    label1: &Label;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
@@ -195,8 +199,16 @@ begin
           begin
             Thread.Sleep(100);
             ClientControlTab.Enabled := true;
-            consoleBox.AppendText(_server.MessageHandler(GETPATH)+'>');
+            
+            var path: string = _server.MessageHandler(GETPATH);
+            
+            // Console
+            consoleBox.AppendText(path+'>');
             consoleBox.SelectionStart := consoleBox.Text.Length;
+            
+            // Explorer
+            explorer.init(ExplorerTab, IconList50, path);
+            
           end 
           else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then 
           begin

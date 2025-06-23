@@ -129,7 +129,7 @@ type TClient = class
     
   end;
   
-  
+  /// Обработка полученных сообщений
   function MessageHandler(msg: string): string;
   begin
     var responce: string;

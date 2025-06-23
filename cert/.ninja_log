@@ -1,0 +1,15 @@
+# ninja log v6
+24340	33610	7723204138629962	D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/MyCert.pfx	ebeb6d7d6485f8a7
+24340	33610	7723204138629962	MyCert.pfx	ebeb6d7d6485f8a7
+2	150	7723220384625393	build.ninja	29f0558ef154ef65
+6	24339	7723204045783603	D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/MyCert.cer	b6db1ce79a51dd92
+25228	31503	7723217179727335	certificate.pfx	fa539832bbd8c225
+6	24339	7723204045783603	MyCert.cer	b6db1ce79a51dd92
+3	25227	7723217116963998	certificate.cer	8ecbc5b659ff1fbc
+3	25227	7723217116963998	D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/certificate.cer	8ecbc5b659ff1fbc
+25228	31503	7723217179727335	D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/certificate.pfx	fa539832bbd8c225
+3	151	7723220384625393	build.ninja	29f0558ef154ef65
+3	24026	7723220624880150	certificate.cer	8ecbc5b659ff1fbc
+3	24026	7723220624880150	D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/certificate.cer	8ecbc5b659ff1fbc
+24027	31513	7723220699903148	certificate.pfx	1e2a114d68198184
+24027	31513	7723220699903148	D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/certificate.pfx	1e2a114d68198184

@@ -185,15 +185,12 @@ type
     /// Сервис: Принимает заявки клиентов на подключение
     private procedure AcceptService();
     begin
-      var newClient: TcpClient;
-      while self.AppIsRunning do
-      begin
+      while self.AppIsRunning do begin
         if self.listener.Pending then begin
-          newClient := self.listener.AcceptTcpClient();
+          var newClient: TcpClient = self.listener.AcceptTcpClient();
           if newClient <> nil then begin
             var ip := (newClient.Client.RemoteEndPoint as IPEndPoint).Address;
             AddClient(new TClient(ip.ToString(), self.port, newClient));
-            
           end;
         end;
       end; // while
@@ -202,7 +199,6 @@ type
     /// Сервис: Следит за состоянием подключения клиентов, реализован на технологии PING-PONG
     private procedure PPService();
     begin
-      
       while self.AppIsRunning do
       begin
         if (CountOfClients = 0) or messageSending then continue;
@@ -228,7 +224,7 @@ type
       
     end;
     
-    /// Сервис: Отправка сообщений
+    /// Отправка сообщений
     public function MessageHandler(msg: string): string;
     begin
       self.messageSending := true;

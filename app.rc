@@ -1,1 +1,48 @@
+#include <windows.h>
+
 APP_ICON ICON "icon.ico"
+
+LANGUAGE 0x0419, 0x0409
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,0,0,0    				// Версия файла (FileVersion)
+PRODUCTVERSION  1,0,0,0    				// Версия продукта (ProductVersion)
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       VS_FF_DEBUG          	// 0 для Release, VS_FF_DEBUG для Debug
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_APP    				// VFT_DLL для библиотек
+FILESUBTYPE     VFT2_UNKNOWN
+
+
+BEGIN
+    BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "041904e4" // Русский, Windows-1251
+		BEGIN
+			VALUE "CompanyName",      "Daemon-Hub\0"
+			VALUE "FileDescription",  "Дистанционное управление другими компьютерами в пределах одной сети\0"
+			VALUE "FileVersion",      "1.0.0.0\0"
+			VALUE "ProductVersion",   "1.0.0.0\0"
+			VALUE "ProductName",      "Дистанционное управление\0"
+			VALUE "LegalCopyright",   "Авторское право © 2025 Daemon-Hub\0"
+			VALUE "InternalName",     "RemoteControl.exe\0"
+			VALUE "OriginalFilename", "RemoteControl.exe\0"
+		END
+		BLOCK "040904b0" // Английский, UTF-16
+		BEGIN
+			VALUE "CompanyName",      "Daemon-Hub\0"
+			VALUE "FileDescription",  "Remote control of other computers within the same network\0"
+			VALUE "FileVersion",      "1.0.0.0\0"
+			VALUE "ProductVersion",   "1.0.0.0\0"
+			VALUE "ProductName",      "Remote Control\0"
+			VALUE "LegalCopyright",   "Copyright © 2025 Daemon-Hub\0"
+			VALUE "InternalName",     "RemoteControl.exe\0"
+			VALUE "OriginalFilename", "RemoteControl.exe\0"
+		END
+	END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+		VALUE "Translation", 0x0419, 1251, 0x0409, 1252  // Русский, Кириллица, Английский, Unicode
+    END
+END

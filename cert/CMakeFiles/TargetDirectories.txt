@@ -1,0 +1,3 @@
+D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/CMakeFiles/generate_certificate.dir
+D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/CMakeFiles/edit_cache.dir
+D:/PascalABC.NET/3 курс/Курсовая/RemoteControl/cert/CMakeFiles/rebuild_cache.dir
