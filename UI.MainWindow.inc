@@ -18,11 +18,11 @@ procedure InitializeComponent;
         self.ConsoleBox := new System.Windows.Forms.TextBox();
         self.contextMenuStrip1 := new System.Windows.Forms.ContextMenuStrip(self.components);
         self.ExplorerTab := new System.Windows.Forms.TabPage();
-        self.IconList50 := new System.Windows.Forms.ImageList(self.components);
-        self.IconList25 := new System.Windows.Forms.ImageList(self.components);
         self.splitContainer2 := new System.Windows.Forms.SplitContainer();
         self.label2 := new System.Windows.Forms.Label();
+        self.IconList50 := new System.Windows.Forms.ImageList(self.components);
         self.label1 := new System.Windows.Forms.Label();
+        self.IconList25 := new System.Windows.Forms.ImageList(self.components);
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -205,7 +205,7 @@ procedure InitializeComponent;
         self.ConsoleTab.BackgroundImageLayout := System.Windows.Forms.ImageLayout.Center;
         self.ConsoleTab.BorderStyle := System.Windows.Forms.BorderStyle.Fixed3D;
         self.ConsoleTab.Controls.Add(self.ConsoleBox);
-        self.ConsoleTab.ImageKey := 'cmd.png';
+        self.ConsoleTab.ImageKey := 'terminal.png';
         self.ConsoleTab.Location := new System.Drawing.Point(4, 35);
         self.ConsoleTab.Name := 'ConsoleTab';
         self.ConsoleTab.Padding := new System.Windows.Forms.Padding(3);
@@ -245,7 +245,7 @@ procedure InitializeComponent;
         // 
         // ExplorerTab
         // 
-        self.ExplorerTab.BackgroundImage := (System.Drawing.Image(resources.GetObject('ExplorerTab.BackgroundImage')));
+        self.ExplorerTab.AutoScroll := true;
         self.ExplorerTab.BackgroundImageLayout := System.Windows.Forms.ImageLayout.Center;
         self.ExplorerTab.BorderStyle := System.Windows.Forms.BorderStyle.Fixed3D;
         self.ExplorerTab.Controls.Add(self.splitContainer2);
@@ -257,58 +257,13 @@ procedure InitializeComponent;
         self.ExplorerTab.TabIndex := 1;
         self.ExplorerTab.Text := 'Проводник';
         self.ExplorerTab.UseVisualStyleBackColor := true;
-        // 
-        // IconList50
-        // 
-        self.IconList50.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('IconList50.ImageStream')));
-        self.IconList50.TransparentColor := System.Drawing.Color.Transparent;
-        self.IconList50.Images.SetKeyName(0, 'cmd.png');
-        self.IconList50.Images.SetKeyName(1, 'dir.png');
-        self.IconList50.Images.SetKeyName(2, 'dll.png');
-        self.IconList50.Images.SetKeyName(3, 'doc.png');
-        self.IconList50.Images.SetKeyName(4, 'exe.png');
-        self.IconList50.Images.SetKeyName(5, 'explorer.png');
-        self.IconList50.Images.SetKeyName(6, 'file.png');
-        self.IconList50.Images.SetKeyName(7, 'html.png');
-        self.IconList50.Images.SetKeyName(8, 'ini.png');
-        self.IconList50.Images.SetKeyName(9, 'iso.png');
-        self.IconList50.Images.SetKeyName(10, 'jpg.png');
-        self.IconList50.Images.SetKeyName(11, 'mp3.png');
-        self.IconList50.Images.SetKeyName(12, 'obj.png');
-        self.IconList50.Images.SetKeyName(13, 'pdf.png');
-        self.IconList50.Images.SetKeyName(14, 'txt.png');
-        self.IconList50.Images.SetKeyName(15, 'wav.png');
-        self.IconList50.Images.SetKeyName(16, 'xls.png');
-        self.IconList50.Images.SetKeyName(17, 'xml.png');
-        self.IconList50.Images.SetKeyName(18, 'zip.png');
-        // 
-        // IconList25
-        // 
-        self.IconList25.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('IconList25.ImageStream')));
-        self.IconList25.TransparentColor := System.Drawing.Color.Transparent;
-        self.IconList25.Images.SetKeyName(0, 'cmd.png');
-        self.IconList25.Images.SetKeyName(1, 'dir.png');
-        self.IconList25.Images.SetKeyName(2, 'dll.png');
-        self.IconList25.Images.SetKeyName(3, 'doc.png');
-        self.IconList25.Images.SetKeyName(4, 'exe.png');
-        self.IconList25.Images.SetKeyName(5, 'explorer.png');
-        self.IconList25.Images.SetKeyName(6, 'file.png');
-        self.IconList25.Images.SetKeyName(7, 'html.png');
-        self.IconList25.Images.SetKeyName(8, 'ini.png');
-        self.IconList25.Images.SetKeyName(9, 'iso.png');
-        self.IconList25.Images.SetKeyName(10, 'jpg.png');
-        self.IconList25.Images.SetKeyName(11, 'mp3.png');
-        self.IconList25.Images.SetKeyName(12, 'obj.png');
-        self.IconList25.Images.SetKeyName(13, 'pdf.png');
-        self.IconList25.Images.SetKeyName(14, 'txt.png');
-        self.IconList25.Images.SetKeyName(15, 'wav.png');
-        self.IconList25.Images.SetKeyName(16, 'xls.png');
-        self.IconList25.Images.SetKeyName(17, 'xml.png');
-        self.IconList25.Images.SetKeyName(18, 'zip.png');
+        self.ExplorerTab.Resize += ExplorerTab_Resize;
         // 
         // splitContainer2
         // 
-        self.splitContainer2.Location := new System.Drawing.Point(6, 6);
+        self.splitContainer2.BackColor := System.Drawing.Color.Transparent;
+        self.splitContainer2.IsSplitterFixed := true;
+        self.splitContainer2.Location := new System.Drawing.Point(750, 6);
         self.splitContainer2.Name := 'splitContainer2';
         self.splitContainer2.Orientation := System.Windows.Forms.Orientation.Horizontal;
         // 
@@ -319,7 +274,7 @@ procedure InitializeComponent;
         // splitContainer2.Panel2
         // 
         self.splitContainer2.Panel2.Controls.Add(self.label1);
-        self.splitContainer2.Size := new System.Drawing.Size(100, 100);
+        self.splitContainer2.Size := new System.Drawing.Size(76, 90);
         self.splitContainer2.TabIndex := 1;
         // 
         // label2
@@ -329,19 +284,76 @@ procedure InitializeComponent;
         self.label2.ImageList := self.IconList50;
         self.label2.Location := new System.Drawing.Point(0, 0);
         self.label2.Name := 'label2';
-        self.label2.Size := new System.Drawing.Size(100, 50);
+        self.label2.Size := new System.Drawing.Size(76, 50);
         self.label2.TabIndex := 0;
-        self.label2.Click += label2_Click;
+        // 
+        // IconList50
+        // 
+        self.IconList50.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('IconList50.ImageStream')));
+        self.IconList50.TransparentColor := System.Drawing.Color.Transparent;
+        self.IconList50.Images.SetKeyName(0, 'asp.png');
+        self.IconList50.Images.SetKeyName(1, 'avi.png');
+        self.IconList50.Images.SetKeyName(2, 'bat.png');
+        self.IconList50.Images.SetKeyName(3, 'cmd.png');
+        self.IconList50.Images.SetKeyName(4, 'com.png');
+        self.IconList50.Images.SetKeyName(5, 'csv.png');
+        self.IconList50.Images.SetKeyName(6, 'dir.png');
+        self.IconList50.Images.SetKeyName(7, 'dll.png');
+        self.IconList50.Images.SetKeyName(8, 'doc.png');
+        self.IconList50.Images.SetKeyName(9, 'docx.png');
+        self.IconList50.Images.SetKeyName(10, 'exe.png');
+        self.IconList50.Images.SetKeyName(11, 'explorer.png');
+        self.IconList50.Images.SetKeyName(12, 'file.png');
+        self.IconList50.Images.SetKeyName(13, 'gif.png');
+        self.IconList50.Images.SetKeyName(14, 'htm.png');
+        self.IconList50.Images.SetKeyName(15, 'html.png');
+        self.IconList50.Images.SetKeyName(16, 'ico.png');
+        self.IconList50.Images.SetKeyName(17, 'ini.png');
+        self.IconList50.Images.SetKeyName(18, 'iso.png');
+        self.IconList50.Images.SetKeyName(19, 'jar.png');
+        self.IconList50.Images.SetKeyName(20, 'jpg.png');
+        self.IconList50.Images.SetKeyName(21, 'js.png');
+        self.IconList50.Images.SetKeyName(22, 'jsx.png');
+        self.IconList50.Images.SetKeyName(23, 'mp3.png');
+        self.IconList50.Images.SetKeyName(24, 'mp4.png');
+        self.IconList50.Images.SetKeyName(25, 'nfo.png');
+        self.IconList50.Images.SetKeyName(26, 'obj.png');
+        self.IconList50.Images.SetKeyName(27, 'otf.png');
+        self.IconList50.Images.SetKeyName(28, 'pabcproj.png');
+        self.IconList50.Images.SetKeyName(29, 'pas.png');
+        self.IconList50.Images.SetKeyName(30, 'pdf.png');
+        self.IconList50.Images.SetKeyName(31, 'pkg.png');
+        self.IconList50.Images.SetKeyName(32, 'png.png');
+        self.IconList50.Images.SetKeyName(33, 'ppt.png');
+        self.IconList50.Images.SetKeyName(34, 'pptx.png');
+        self.IconList50.Images.SetKeyName(35, 'rtf.png');
+        self.IconList50.Images.SetKeyName(36, 'terminal.png');
+        self.IconList50.Images.SetKeyName(37, 'txt.png');
+        self.IconList50.Images.SetKeyName(38, 'wav.png');
+        self.IconList50.Images.SetKeyName(39, 'wmv.png');
+        self.IconList50.Images.SetKeyName(40, 'xls.png');
+        self.IconList50.Images.SetKeyName(41, 'xlsx.png');
+        self.IconList50.Images.SetKeyName(42, 'xml.png');
+        self.IconList50.Images.SetKeyName(43, 'zip.png');
         // 
         // label1
         // 
+        self.label1.AutoEllipsis := true;
         self.label1.Dock := System.Windows.Forms.DockStyle.Fill;
         self.label1.Location := new System.Drawing.Point(0, 0);
         self.label1.Name := 'label1';
-        self.label1.Size := new System.Drawing.Size(100, 46);
+        self.label1.Size := new System.Drawing.Size(76, 36);
         self.label1.TabIndex := 0;
-        self.label1.Text := 'label1';
+        self.label1.Text := 'autorun.ini';
         self.label1.TextAlign := System.Drawing.ContentAlignment.TopCenter;
+        self.label1.UseCompatibleTextRendering := true;
+        // 
+        // IconList25
+        // 
+        self.IconList25.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('IconList25.ImageStream')));
+        self.IconList25.TransparentColor := System.Drawing.Color.Transparent;
+        self.IconList25.Images.SetKeyName(0, 'explorer.png');
+        self.IconList25.Images.SetKeyName(1, 'terminal.png');
         // 
         // MainWindow
         // 

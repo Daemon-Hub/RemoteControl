@@ -27,6 +27,7 @@ type
     procedure ConsoleBox_KeyDown(sender: Object; e: KeyEventArgs);
     procedure ConsoleBox_MouseDown(sender: Object; e: MouseEventArgs);
     procedure cls(_t: string := '');
+    procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -135,7 +136,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = '192.168.52.239';//ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -207,7 +208,8 @@ begin
             consoleBox.SelectionStart := consoleBox.Text.Length;
             
             // Explorer
-            explorer.init(ExplorerTab, IconList50, path);
+            explorer.init(self.ExplorerTab, self.IconList50, path);
+            explorer.Update();
             
           end 
           else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then 
@@ -314,6 +316,12 @@ begin
   consoleBox.ScrollToCaret();
   end;
 end;
+
+procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs);
+begin
+  explorer.Update(true);
+end;
+
 
 
 end.

@@ -6,10 +6,11 @@ interface
 uses System.Diagnostics, System.Text;
 
 var
+  __initialized__: boolean = false;
+  
   p: Process;
   /// Сюда записываются выводы всех комманд
   output: string;
-  __initialized__: boolean = false;
   /// Список нестандартных команд для cmd (например, cd)
   CustomCommands: array of string = ['cd'];
   CustomCommandTitle, path: string;
