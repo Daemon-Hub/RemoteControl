@@ -19,30 +19,42 @@ var
   /// Путь к рабочей директории
   path: string;
   window: TabPage;
+  tool_bar: ToolStrip;
   filetypes: set of string = [
     'dll', 'doc', 'exe', 'html', 'ini', 'iso', 'jpg',
     'mp3', 'obj', 'pdf', 'txt', 'wav', 'xls', 'xml', 
     'zip', 'pas', 'docx', 'htm', 'xlsx', 'pabcproj',
     'asp', 'avi', 'bat', 'cmd', 'com', 'csv', 'gif',
     'jar', 'js', 'jsx', 'mp4', 'nfo', 'otf', 'pkg', 
-    'png', 'wmv', 'ppt', 'pptx', 'rtf'
+    'png', 'wmv', 'ppt', 'pptx', 'rtf', 'ico'
   ];
   
   
-procedure init(window: TabPage; icon_list: ImageList; path: string);
-procedure GetItems();
+procedure init(
+  window: TabPage; 
+  icon_list: ImageList; 
+  tool_bar: ToolStrip; 
+  path: string
+  );
 procedure Update(is_not_new_dir: boolean := false);
+procedure UpTheDirectory(LabelPath: System.Windows.Forms.ToolStripLabel);
 
 function NewItem(filename: string; is_dir: boolean): SplitContainer;
 function GetIconName(filename: string): string;
 
 implementation
 
-procedure init(window: TabPage; icon_list: ImageList; path: string);
+procedure init(
+  window: TabPage; 
+  icon_list: ImageList; 
+  tool_bar: ToolStrip; 
+  path: string
+  );
 begin
   explorer.window := window;
   explorer.icon_list := icon_list;
-  explorer.path := 'D:\PascalABC.NET\3 курс\Курсовая\RemoteControl';
+  explorer.tool_bar := tool_bar;
+  explorer.path := 'D:';//'D:\PascalABC.NET\3 курс\Курсовая\RemoteControl';
   
   items := new List<SplitContainer>(10);
   
@@ -54,7 +66,7 @@ procedure Update(is_not_new_dir: boolean);
 begin
   if not is_not_new_dir then begin
     if items.Count <> 0 then
-      items.Clear();
+      items.Clear(); 
     // Dirs
     foreach var dirname in Directory.GetDirectories(path) do
     begin
@@ -67,12 +79,14 @@ begin
       items.Add(NewItem(filename.Substring(filename.LastIndexOf('\')+1), false));
     end;
   end;
-  
-  var (x, y) := (10, 10);
+
   window.Controls.Clear();
+  window.Controls.Add(tool_bar);
+  
+  var (x, y) := (5, 30);  
   foreach var obj in items do begin
     if x + obj.Width >= window.Width then begin
-      x := 10;
+      x := 5;
       y += obj.Height+5
     end;
     obj.Location := new Point(x, y);    
@@ -80,6 +94,15 @@ begin
     x += obj.Width;
   end;
   
+end;
+
+
+procedure UpTheDirectory(LabelPath: System.Windows.Forms.ToolStripLabel);
+begin
+  if Directory.GetDirectoryRoot(path) = path+'\' then exit;
+  path := path.Substring(0, path.LastIndexOf('\'));
+  LabelPath.Text := path;
+  Update();
 end;
 
 
@@ -130,10 +153,5 @@ begin
     Result := 'file.png';
 end;
 
-
-procedure GetItems();
-begin
-  
-end;
 
 end.

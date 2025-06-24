@@ -2,7 +2,12 @@
 
 interface
 
-uses System, System.Drawing, System.Windows.Forms, System.Threading, explorer, server, client, types;
+uses 
+  System, 
+  System.Drawing, 
+  System.Threading,
+  System.Windows.Forms,  
+  explorer, server, client, types;
 
 type ApplicationState = (SERVER, CLIENT);
 
@@ -28,6 +33,8 @@ type
     procedure ConsoleBox_MouseDown(sender: Object; e: MouseEventArgs);
     procedure cls(_t: string := '');
     procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
+
+    procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -39,7 +46,7 @@ type
     clientConnectButton: Button;
     ClientIPMask: MaskedTextBox;
     clientConnectState: &Label;
-    IconList25: ImageList;
+    UIIconList: ImageList;
     components: System.ComponentModel.IContainer;
     splitContainer1: SplitContainer;
     ClientControlTab: TabControl;
@@ -48,10 +55,14 @@ type
     ExplorerTab: TabPage;
     CountOfClientsLabel: &Label;
     contextMenuStrip1: System.Windows.Forms.ContextMenuStrip;
-    IconList50: ImageList;
+    FilesIconList: ImageList;
     splitContainer2: SplitContainer;
     label2: &Label;
     label1: &Label;
+    ExplorerToolBar: ToolStrip;
+    ExplorerToolBarButtonUp: ToolStripButton;
+    toolStripSeparator1: ToolStripSeparator;
+    LabelPath: ToolStripLabel;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
@@ -208,7 +219,8 @@ begin
             consoleBox.SelectionStart := consoleBox.Text.Length;
             
             // Explorer
-            explorer.init(self.ExplorerTab, self.IconList50, path);
+            self.LabelPath.Text := path;
+            explorer.init(self.ExplorerTab, self.FilesIconList, ExplorerToolBar, path);
             explorer.Update();
             
           end 
@@ -317,10 +329,17 @@ begin
   end;
 end;
 
-procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs);
+procedure MainWindow.ExplorerTab_Resize(
+  sender: Object; 
+  e: EventArgs
+) := explorer.Update(true);
+
+
+procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
 begin
-  explorer.Update(true);
+  explorer.UpTheDirectory(self.LabelPath);
 end;
+
 
 
 

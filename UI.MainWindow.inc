@@ -20,9 +20,13 @@ procedure InitializeComponent;
         self.ExplorerTab := new System.Windows.Forms.TabPage();
         self.splitContainer2 := new System.Windows.Forms.SplitContainer();
         self.label2 := new System.Windows.Forms.Label();
-        self.IconList50 := new System.Windows.Forms.ImageList(self.components);
+        self.FilesIconList := new System.Windows.Forms.ImageList(self.components);
         self.label1 := new System.Windows.Forms.Label();
-        self.IconList25 := new System.Windows.Forms.ImageList(self.components);
+        self.UIIconList := new System.Windows.Forms.ImageList(self.components);
+        self.ExplorerToolBar := new System.Windows.Forms.ToolStrip();
+        self.ExplorerToolBarButtonUp := new System.Windows.Forms.ToolStripButton();
+        self.toolStripSeparator1 := new System.Windows.Forms.ToolStripSeparator();
+        self.LabelPath := new System.Windows.Forms.ToolStripLabel();
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -37,6 +41,7 @@ procedure InitializeComponent;
         self.splitContainer2.Panel1.SuspendLayout();
         self.splitContainer2.Panel2.SuspendLayout();
         self.splitContainer2.SuspendLayout();
+        self.ExplorerToolBar.SuspendLayout();
         self.SuspendLayout();
         // 
         // DefaultTab
@@ -192,7 +197,7 @@ procedure InitializeComponent;
         self.ClientControlTab.Controls.Add(self.ExplorerTab);
         self.ClientControlTab.Dock := System.Windows.Forms.DockStyle.Fill;
         self.ClientControlTab.Enabled := false;
-        self.ClientControlTab.ImageList := self.IconList25;
+        self.ClientControlTab.ImageList := self.UIIconList;
         self.ClientControlTab.Location := new System.Drawing.Point(0, 0);
         self.ClientControlTab.Name := 'ClientControlTab';
         self.ClientControlTab.SelectedIndex := 0;
@@ -248,6 +253,7 @@ procedure InitializeComponent;
         self.ExplorerTab.AutoScroll := true;
         self.ExplorerTab.BackgroundImageLayout := System.Windows.Forms.ImageLayout.Center;
         self.ExplorerTab.BorderStyle := System.Windows.Forms.BorderStyle.Fixed3D;
+        self.ExplorerTab.Controls.Add(self.ExplorerToolBar);
         self.ExplorerTab.Controls.Add(self.splitContainer2);
         self.ExplorerTab.ImageKey := 'explorer.png';
         self.ExplorerTab.Location := new System.Drawing.Point(4, 35);
@@ -263,7 +269,7 @@ procedure InitializeComponent;
         // 
         self.splitContainer2.BackColor := System.Drawing.Color.Transparent;
         self.splitContainer2.IsSplitterFixed := true;
-        self.splitContainer2.Location := new System.Drawing.Point(750, 6);
+        self.splitContainer2.Location := new System.Drawing.Point(750, 79);
         self.splitContainer2.Name := 'splitContainer2';
         self.splitContainer2.Orientation := System.Windows.Forms.Orientation.Horizontal;
         // 
@@ -275,66 +281,67 @@ procedure InitializeComponent;
         // 
         self.splitContainer2.Panel2.Controls.Add(self.label1);
         self.splitContainer2.Size := new System.Drawing.Size(76, 90);
+        self.splitContainer2.SplitterDistance := 45;
         self.splitContainer2.TabIndex := 1;
         // 
         // label2
         // 
         self.label2.Dock := System.Windows.Forms.DockStyle.Fill;
         self.label2.ImageKey := 'ini.png';
-        self.label2.ImageList := self.IconList50;
+        self.label2.ImageList := self.FilesIconList;
         self.label2.Location := new System.Drawing.Point(0, 0);
         self.label2.Name := 'label2';
-        self.label2.Size := new System.Drawing.Size(76, 50);
-        self.label2.TabIndex := 0;
+        self.label2.Size := new System.Drawing.Size(76, 45);
+        self.label2.TabIndex := 1;
         // 
-        // IconList50
+        // FilesIconList
         // 
-        self.IconList50.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('IconList50.ImageStream')));
-        self.IconList50.TransparentColor := System.Drawing.Color.Transparent;
-        self.IconList50.Images.SetKeyName(0, 'asp.png');
-        self.IconList50.Images.SetKeyName(1, 'avi.png');
-        self.IconList50.Images.SetKeyName(2, 'bat.png');
-        self.IconList50.Images.SetKeyName(3, 'cmd.png');
-        self.IconList50.Images.SetKeyName(4, 'com.png');
-        self.IconList50.Images.SetKeyName(5, 'csv.png');
-        self.IconList50.Images.SetKeyName(6, 'dir.png');
-        self.IconList50.Images.SetKeyName(7, 'dll.png');
-        self.IconList50.Images.SetKeyName(8, 'doc.png');
-        self.IconList50.Images.SetKeyName(9, 'docx.png');
-        self.IconList50.Images.SetKeyName(10, 'exe.png');
-        self.IconList50.Images.SetKeyName(11, 'explorer.png');
-        self.IconList50.Images.SetKeyName(12, 'file.png');
-        self.IconList50.Images.SetKeyName(13, 'gif.png');
-        self.IconList50.Images.SetKeyName(14, 'htm.png');
-        self.IconList50.Images.SetKeyName(15, 'html.png');
-        self.IconList50.Images.SetKeyName(16, 'ico.png');
-        self.IconList50.Images.SetKeyName(17, 'ini.png');
-        self.IconList50.Images.SetKeyName(18, 'iso.png');
-        self.IconList50.Images.SetKeyName(19, 'jar.png');
-        self.IconList50.Images.SetKeyName(20, 'jpg.png');
-        self.IconList50.Images.SetKeyName(21, 'js.png');
-        self.IconList50.Images.SetKeyName(22, 'jsx.png');
-        self.IconList50.Images.SetKeyName(23, 'mp3.png');
-        self.IconList50.Images.SetKeyName(24, 'mp4.png');
-        self.IconList50.Images.SetKeyName(25, 'nfo.png');
-        self.IconList50.Images.SetKeyName(26, 'obj.png');
-        self.IconList50.Images.SetKeyName(27, 'otf.png');
-        self.IconList50.Images.SetKeyName(28, 'pabcproj.png');
-        self.IconList50.Images.SetKeyName(29, 'pas.png');
-        self.IconList50.Images.SetKeyName(30, 'pdf.png');
-        self.IconList50.Images.SetKeyName(31, 'pkg.png');
-        self.IconList50.Images.SetKeyName(32, 'png.png');
-        self.IconList50.Images.SetKeyName(33, 'ppt.png');
-        self.IconList50.Images.SetKeyName(34, 'pptx.png');
-        self.IconList50.Images.SetKeyName(35, 'rtf.png');
-        self.IconList50.Images.SetKeyName(36, 'terminal.png');
-        self.IconList50.Images.SetKeyName(37, 'txt.png');
-        self.IconList50.Images.SetKeyName(38, 'wav.png');
-        self.IconList50.Images.SetKeyName(39, 'wmv.png');
-        self.IconList50.Images.SetKeyName(40, 'xls.png');
-        self.IconList50.Images.SetKeyName(41, 'xlsx.png');
-        self.IconList50.Images.SetKeyName(42, 'xml.png');
-        self.IconList50.Images.SetKeyName(43, 'zip.png');
+        self.FilesIconList.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('FilesIconList.ImageStream')));
+        self.FilesIconList.TransparentColor := System.Drawing.Color.Transparent;
+        self.FilesIconList.Images.SetKeyName(0, 'asp.png');
+        self.FilesIconList.Images.SetKeyName(1, 'avi.png');
+        self.FilesIconList.Images.SetKeyName(2, 'bat.png');
+        self.FilesIconList.Images.SetKeyName(3, 'cmd.png');
+        self.FilesIconList.Images.SetKeyName(4, 'com.png');
+        self.FilesIconList.Images.SetKeyName(5, 'csv.png');
+        self.FilesIconList.Images.SetKeyName(6, 'dir.png');
+        self.FilesIconList.Images.SetKeyName(7, 'dll.png');
+        self.FilesIconList.Images.SetKeyName(8, 'doc.png');
+        self.FilesIconList.Images.SetKeyName(9, 'docx.png');
+        self.FilesIconList.Images.SetKeyName(10, 'exe.png');
+        self.FilesIconList.Images.SetKeyName(11, 'explorer.png');
+        self.FilesIconList.Images.SetKeyName(12, 'file.png');
+        self.FilesIconList.Images.SetKeyName(13, 'gif.png');
+        self.FilesIconList.Images.SetKeyName(14, 'htm.png');
+        self.FilesIconList.Images.SetKeyName(15, 'html.png');
+        self.FilesIconList.Images.SetKeyName(16, 'ico.png');
+        self.FilesIconList.Images.SetKeyName(17, 'ini.png');
+        self.FilesIconList.Images.SetKeyName(18, 'iso.png');
+        self.FilesIconList.Images.SetKeyName(19, 'jar.png');
+        self.FilesIconList.Images.SetKeyName(20, 'jpg.png');
+        self.FilesIconList.Images.SetKeyName(21, 'js.png');
+        self.FilesIconList.Images.SetKeyName(22, 'jsx.png');
+        self.FilesIconList.Images.SetKeyName(23, 'mp3.png');
+        self.FilesIconList.Images.SetKeyName(24, 'mp4.png');
+        self.FilesIconList.Images.SetKeyName(25, 'nfo.png');
+        self.FilesIconList.Images.SetKeyName(26, 'obj.png');
+        self.FilesIconList.Images.SetKeyName(27, 'otf.png');
+        self.FilesIconList.Images.SetKeyName(28, 'pabcproj.png');
+        self.FilesIconList.Images.SetKeyName(29, 'pas.png');
+        self.FilesIconList.Images.SetKeyName(30, 'pdf.png');
+        self.FilesIconList.Images.SetKeyName(31, 'pkg.png');
+        self.FilesIconList.Images.SetKeyName(32, 'png.png');
+        self.FilesIconList.Images.SetKeyName(33, 'ppt.png');
+        self.FilesIconList.Images.SetKeyName(34, 'pptx.png');
+        self.FilesIconList.Images.SetKeyName(35, 'rtf.png');
+        self.FilesIconList.Images.SetKeyName(36, 'terminal.png');
+        self.FilesIconList.Images.SetKeyName(37, 'txt.png');
+        self.FilesIconList.Images.SetKeyName(38, 'wav.png');
+        self.FilesIconList.Images.SetKeyName(39, 'wmv.png');
+        self.FilesIconList.Images.SetKeyName(40, 'xls.png');
+        self.FilesIconList.Images.SetKeyName(41, 'xlsx.png');
+        self.FilesIconList.Images.SetKeyName(42, 'xml.png');
+        self.FilesIconList.Images.SetKeyName(43, 'zip.png');
         // 
         // label1
         // 
@@ -342,18 +349,50 @@ procedure InitializeComponent;
         self.label1.Dock := System.Windows.Forms.DockStyle.Fill;
         self.label1.Location := new System.Drawing.Point(0, 0);
         self.label1.Name := 'label1';
-        self.label1.Size := new System.Drawing.Size(76, 36);
+        self.label1.Size := new System.Drawing.Size(76, 41);
         self.label1.TabIndex := 0;
         self.label1.Text := 'autorun.ini';
         self.label1.TextAlign := System.Drawing.ContentAlignment.TopCenter;
         self.label1.UseCompatibleTextRendering := true;
         // 
-        // IconList25
+        // UIIconList
         // 
-        self.IconList25.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('IconList25.ImageStream')));
-        self.IconList25.TransparentColor := System.Drawing.Color.Transparent;
-        self.IconList25.Images.SetKeyName(0, 'explorer.png');
-        self.IconList25.Images.SetKeyName(1, 'terminal.png');
+        self.UIIconList.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('UIIconList.ImageStream')));
+        self.UIIconList.TransparentColor := System.Drawing.Color.Transparent;
+        self.UIIconList.Images.SetKeyName(0, 'explorer.png');
+        self.UIIconList.Images.SetKeyName(1, 'terminal.png');
+        self.UIIconList.Images.SetKeyName(2, 'arrow.png');
+        // 
+        // ExplorerToolBar
+        // 
+        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.ActiveCaption;
+        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.LabelPath));
+        self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
+        self.ExplorerToolBar.Name := 'ExplorerToolBar';
+        self.ExplorerToolBar.Size := new System.Drawing.Size(826, 25);
+        self.ExplorerToolBar.TabIndex := 0;
+        // 
+        // ExplorerToolBarButtonUp
+        // 
+        self.ExplorerToolBarButtonUp.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerToolBarButtonUp.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.ExplorerToolBarButtonUp.Image := (System.Drawing.Image(resources.GetObject('ExplorerToolBarButtonUp.Image')));
+        self.ExplorerToolBarButtonUp.ImageTransparentColor := System.Drawing.Color.Transparent;
+        self.ExplorerToolBarButtonUp.Name := 'ExplorerToolBarButtonUp';
+        self.ExplorerToolBarButtonUp.Size := new System.Drawing.Size(23, 22);
+        self.ExplorerToolBarButtonUp.ToolTipText := 'Перейти в верхнюю директорию';
+        self.ExplorerToolBarButtonUp.Click += ExplorerToolBarButtonUp_Click;
+        // 
+        // toolStripSeparator1
+        // 
+        self.toolStripSeparator1.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.toolStripSeparator1.Name := 'toolStripSeparator1';
+        self.toolStripSeparator1.Size := new System.Drawing.Size(6, 25);
+        // 
+        // LabelPath
+        // 
+        self.LabelPath.Name := 'LabelPath';
+        self.LabelPath.Size := new System.Drawing.Size(0, 22);
         // 
         // MainWindow
         // 
@@ -378,9 +417,12 @@ procedure InitializeComponent;
         self.ConsoleTab.ResumeLayout(false);
         self.ConsoleTab.PerformLayout();
         self.ExplorerTab.ResumeLayout(false);
+        self.ExplorerTab.PerformLayout();
         self.splitContainer2.Panel1.ResumeLayout(false);
         self.splitContainer2.Panel2.ResumeLayout(false);
         (System.ComponentModel.ISupportInitialize(self.splitContainer2)).EndInit();
         self.splitContainer2.ResumeLayout(false);
+        self.ExplorerToolBar.ResumeLayout(false);
+        self.ExplorerToolBar.PerformLayout();
         self.ResumeLayout(false);
     end;
