@@ -18,15 +18,15 @@ procedure InitializeComponent;
         self.ConsoleBox := new System.Windows.Forms.TextBox();
         self.contextMenuStrip1 := new System.Windows.Forms.ContextMenuStrip(self.components);
         self.ExplorerTab := new System.Windows.Forms.TabPage();
+        self.ExplorerToolBar := new System.Windows.Forms.ToolStrip();
+        self.ExplorerToolBarButtonUp := new System.Windows.Forms.ToolStripButton();
+        self.toolStripSeparator1 := new System.Windows.Forms.ToolStripSeparator();
+        self.LabelPath := new System.Windows.Forms.ToolStripLabel();
         self.splitContainer2 := new System.Windows.Forms.SplitContainer();
         self.label2 := new System.Windows.Forms.Label();
         self.FilesIconList := new System.Windows.Forms.ImageList(self.components);
         self.label1 := new System.Windows.Forms.Label();
         self.UIIconList := new System.Windows.Forms.ImageList(self.components);
-        self.ExplorerToolBar := new System.Windows.Forms.ToolStrip();
-        self.ExplorerToolBarButtonUp := new System.Windows.Forms.ToolStripButton();
-        self.toolStripSeparator1 := new System.Windows.Forms.ToolStripSeparator();
-        self.LabelPath := new System.Windows.Forms.ToolStripLabel();
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -37,11 +37,11 @@ procedure InitializeComponent;
         self.ClientControlTab.SuspendLayout();
         self.ConsoleTab.SuspendLayout();
         self.ExplorerTab.SuspendLayout();
+        self.ExplorerToolBar.SuspendLayout();
         (System.ComponentModel.ISupportInitialize(self.splitContainer2)).BeginInit();
         self.splitContainer2.Panel1.SuspendLayout();
         self.splitContainer2.Panel2.SuspendLayout();
         self.splitContainer2.SuspendLayout();
-        self.ExplorerToolBar.SuspendLayout();
         self.SuspendLayout();
         // 
         // DefaultTab
@@ -265,11 +265,43 @@ procedure InitializeComponent;
         self.ExplorerTab.UseVisualStyleBackColor := true;
         self.ExplorerTab.Resize += ExplorerTab_Resize;
         // 
+        // ExplorerToolBar
+        // 
+        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.ActiveCaption;
+        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.LabelPath));
+        self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
+        self.ExplorerToolBar.Name := 'ExplorerToolBar';
+        self.ExplorerToolBar.Size := new System.Drawing.Size(826, 25);
+        self.ExplorerToolBar.TabIndex := 0;
+        // 
+        // ExplorerToolBarButtonUp
+        // 
+        self.ExplorerToolBarButtonUp.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerToolBarButtonUp.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.ExplorerToolBarButtonUp.Image := (System.Drawing.Image(resources.GetObject('ExplorerToolBarButtonUp.Image')));
+        self.ExplorerToolBarButtonUp.ImageTransparentColor := System.Drawing.Color.Transparent;
+        self.ExplorerToolBarButtonUp.Name := 'ExplorerToolBarButtonUp';
+        self.ExplorerToolBarButtonUp.Size := new System.Drawing.Size(23, 22);
+        self.ExplorerToolBarButtonUp.ToolTipText := 'Перейти в верхнюю директорию';
+        self.ExplorerToolBarButtonUp.Click += ExplorerToolBarButtonUp_Click;
+        // 
+        // toolStripSeparator1
+        // 
+        self.toolStripSeparator1.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.toolStripSeparator1.Name := 'toolStripSeparator1';
+        self.toolStripSeparator1.Size := new System.Drawing.Size(6, 25);
+        // 
+        // LabelPath
+        // 
+        self.LabelPath.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+        self.LabelPath.Name := 'LabelPath';
+        self.LabelPath.Size := new System.Drawing.Size(0, 22);
+        self.LabelPath.ToolTipText := 'Путь, по которой вы сейчас находитесь';
+        // 
         // splitContainer2
         // 
-        self.splitContainer2.BackColor := System.Drawing.Color.Transparent;
-        self.splitContainer2.IsSplitterFixed := true;
-        self.splitContainer2.Location := new System.Drawing.Point(750, 79);
+        self.splitContainer2.BackColor := System.Drawing.SystemColors.ActiveCaption;
+        self.splitContainer2.Location := new System.Drawing.Point(525, 50);
         self.splitContainer2.Name := 'splitContainer2';
         self.splitContainer2.Orientation := System.Windows.Forms.Orientation.Horizontal;
         // 
@@ -280,8 +312,8 @@ procedure InitializeComponent;
         // splitContainer2.Panel2
         // 
         self.splitContainer2.Panel2.Controls.Add(self.label1);
-        self.splitContainer2.Size := new System.Drawing.Size(76, 90);
-        self.splitContainer2.SplitterDistance := 45;
+        self.splitContainer2.Size := new System.Drawing.Size(82, 98);
+        self.splitContainer2.SplitterDistance := 57;
         self.splitContainer2.TabIndex := 1;
         // 
         // label2
@@ -291,7 +323,7 @@ procedure InitializeComponent;
         self.label2.ImageList := self.FilesIconList;
         self.label2.Location := new System.Drawing.Point(0, 0);
         self.label2.Name := 'label2';
-        self.label2.Size := new System.Drawing.Size(76, 45);
+        self.label2.Size := new System.Drawing.Size(82, 57);
         self.label2.TabIndex := 1;
         // 
         // FilesIconList
@@ -349,7 +381,7 @@ procedure InitializeComponent;
         self.label1.Dock := System.Windows.Forms.DockStyle.Fill;
         self.label1.Location := new System.Drawing.Point(0, 0);
         self.label1.Name := 'label1';
-        self.label1.Size := new System.Drawing.Size(76, 41);
+        self.label1.Size := new System.Drawing.Size(82, 37);
         self.label1.TabIndex := 0;
         self.label1.Text := 'autorun.ini';
         self.label1.TextAlign := System.Drawing.ContentAlignment.TopCenter;
@@ -362,37 +394,6 @@ procedure InitializeComponent;
         self.UIIconList.Images.SetKeyName(0, 'explorer.png');
         self.UIIconList.Images.SetKeyName(1, 'terminal.png');
         self.UIIconList.Images.SetKeyName(2, 'arrow.png');
-        // 
-        // ExplorerToolBar
-        // 
-        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.ActiveCaption;
-        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.LabelPath));
-        self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
-        self.ExplorerToolBar.Name := 'ExplorerToolBar';
-        self.ExplorerToolBar.Size := new System.Drawing.Size(826, 25);
-        self.ExplorerToolBar.TabIndex := 0;
-        // 
-        // ExplorerToolBarButtonUp
-        // 
-        self.ExplorerToolBarButtonUp.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.ExplorerToolBarButtonUp.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-        self.ExplorerToolBarButtonUp.Image := (System.Drawing.Image(resources.GetObject('ExplorerToolBarButtonUp.Image')));
-        self.ExplorerToolBarButtonUp.ImageTransparentColor := System.Drawing.Color.Transparent;
-        self.ExplorerToolBarButtonUp.Name := 'ExplorerToolBarButtonUp';
-        self.ExplorerToolBarButtonUp.Size := new System.Drawing.Size(23, 22);
-        self.ExplorerToolBarButtonUp.ToolTipText := 'Перейти в верхнюю директорию';
-        self.ExplorerToolBarButtonUp.Click += ExplorerToolBarButtonUp_Click;
-        // 
-        // toolStripSeparator1
-        // 
-        self.toolStripSeparator1.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.toolStripSeparator1.Name := 'toolStripSeparator1';
-        self.toolStripSeparator1.Size := new System.Drawing.Size(6, 25);
-        // 
-        // LabelPath
-        // 
-        self.LabelPath.Name := 'LabelPath';
-        self.LabelPath.Size := new System.Drawing.Size(0, 22);
         // 
         // MainWindow
         // 
@@ -418,11 +419,11 @@ procedure InitializeComponent;
         self.ConsoleTab.PerformLayout();
         self.ExplorerTab.ResumeLayout(false);
         self.ExplorerTab.PerformLayout();
+        self.ExplorerToolBar.ResumeLayout(false);
+        self.ExplorerToolBar.PerformLayout();
         self.splitContainer2.Panel1.ResumeLayout(false);
         self.splitContainer2.Panel2.ResumeLayout(false);
         (System.ComponentModel.ISupportInitialize(self.splitContainer2)).EndInit();
         self.splitContainer2.ResumeLayout(false);
-        self.ExplorerToolBar.ResumeLayout(false);
-        self.ExplorerToolBar.PerformLayout();
         self.ResumeLayout(false);
     end;

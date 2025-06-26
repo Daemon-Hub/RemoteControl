@@ -33,8 +33,8 @@ type
     procedure ConsoleBox_MouseDown(sender: Object; e: MouseEventArgs);
     procedure cls(_t: string := '');
     procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
-
     procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
+
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -147,7 +147,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = '192.168.52.239';//ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = '172.19.0.1';//ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -220,8 +220,9 @@ begin
             
             // Explorer
             self.LabelPath.Text := path;
-            explorer.init(self.ExplorerTab, self.FilesIconList, ExplorerToolBar, path);
-            explorer.Update();
+            explorer.init(self.ExplorerTab, self.FilesIconList, self.ExplorerToolBar);
+            explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                            _server.MessageHandler(E_GET_FILES));
             
           end 
           else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then 
@@ -246,7 +247,6 @@ procedure MainWindow.cls(_t: string) := ConsoleBox.Text := _t;
 procedure MainWindow.ConsoleBox_KeyDown(sender: Object; e: KeyEventArgs);
 begin
   {$region Options}
-
   
   if e.KeyCode in [Keys.UP, Keys.Down] then begin
     e.Handled := true;
@@ -329,16 +329,20 @@ begin
   end;
 end;
 
+
 procedure MainWindow.ExplorerTab_Resize(
   sender: Object; 
   e: EventArgs
-) := explorer.Update(true);
+) := explorer.Update(is_not_new_dir := true);
 
 
 procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
 begin
-  explorer.UpTheDirectory(self.LabelPath);
+  self.LabelPath.Text := _server.MessageHandler(E_ARROW_UP);
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                  _server.MessageHandler(E_GET_FILES));
 end;
+
 
 
 
