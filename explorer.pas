@@ -12,16 +12,31 @@ uses
   
 
 var
+  /// Определяет инициальизирован ли модуль или нет
   __initialized__: boolean = false;
+  
   /// Содержит элементы рабочей директории
   items: List<SplitContainer>;
+  
   /// Содержит элементы которые были выделены нажатием
   selected_items: List<SplitContainer>;
+  
+  /// Цвет в который окрашивается объект при наведении на него мышки или клике
   selected_color: Color = Color.FromKnownColor(KnownColor.ActiveCaption);
+  
+  /// Стандартный цвет объекта
   unselected_color: Color = Color.Transparent;
+  
+  /// Список содержащий иконки для поддерживающихся типов файлов
   icon_list: ImageList;
+  
+  /// Основная область проводника
   window: TabPage;
+  
+  /// Строка с инструментами
   tool_bar: ToolStrip;
+  
+  /// Поддерживаемые типы файлов
   filetypes: set of string = [
     'dll', 'doc', 'exe', 'html', 'ini', 'iso', 'jpg',
     'mp3', 'obj', 'pdf', 'txt', 'wav', 'xls', 'xml', 
@@ -31,32 +46,46 @@ var
     'png', 'wmv', 'ppt', 'pptx', 'rtf', 'ico'
   ];
   
+  /// На элемент нажали два раза подряд
+  Control_DoubleClick: EventHandler;
   
-procedure init(window: TabPage; 
-               icon_list: ImageList; 
-               tool_bar: ToolStrip);
-procedure Update(dirs: string := ''; 
-                files: string := ''; 
-                is_not_new_dir: boolean := false);
-
+  
+/// Инициальизирует необходимые объекты для работы модуля
+procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler);
+               
+/// Обновляет содержимое проводника               
+procedure Update(dirs: string := ''; files: string := ''; is_not_new_dir: boolean := false);
+                
+/// Создаёт новый объект директория/файл
 function NewItem(filename: string; is_dir: boolean): SplitContainer;
+
+/// По расширению файла определяет нужную иконку и возвращает ключ для списка иконок
 function GetIconName(filename: string): string;
 
+/// Возвращает объект SplitContainer, который хранит obj
+function GetSplitContainer(obj: Object): SplitContainer;
+
 {$region EventHandlers}
-procedure Label_MouseDown(sender: Object; e: MouseEventArgs);
-procedure Label_MouseMove(sender: Object; e: MouseEventArgs);
-procedure Label_MouseLeave(sender: Object; e: EventArgs);
+
+/// На элемент нажали кнопкой мыши
+procedure Control_MouseDown(sender: Object; e: MouseEventArgs);
+
+/// Курсор вошёл в область видимый элементом
+procedure Control_MouseMove(sender: Object; e: MouseEventArgs);
+
+/// Курсор вышел из области видимый элементом
+procedure Control_MouseLeave(sender: Object; e: EventArgs);
+
 {$endregion EventHandlers}
 
 implementation
 
-procedure init(window: TabPage; 
-               icon_list: ImageList; 
-               tool_bar: ToolStrip);
+procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler);
 begin
   explorer.window := window;
   explorer.icon_list := icon_list;
   explorer.tool_bar := tool_bar;
+  explorer.Control_DoubleClick += double_click_event_handle;
 
   items := new List<SplitContainer>(10);
   selected_items := new List<SplitContainer>(10);
@@ -94,7 +123,7 @@ begin
     window.Controls.Add(obj as Control);
     x += obj.Width;
   end;
-  
+
 end;
 
 
@@ -115,6 +144,10 @@ begin
   item_template.IsSplitterFixed := true;
   item_template.BackColor := unselected_color;
   
+  item_template.MouseDown += Control_MouseDown;
+  item_template.MouseMove += Control_MouseMove;
+  item_template.MouseLeave += Control_MouseLeave;
+  
   var label1, label2: System.Windows.Forms.Label;
   
   (label1, label2) := (new System.Windows.Forms.Label(), new System.Windows.Forms.Label());
@@ -127,11 +160,12 @@ begin
   label1.ImageList := icon_list;
   label1.Location := new Point(0, 0);
   label1.Size := new Size(100, 50);
+  label1.MaximumSize := new Size(100, 50);
   label1.TabIndex := 0;
   
-  label1.MouseDown += Label_MouseDown;
-  label1.MouseMove += Label_MouseMove;
-  label1.MouseLeave += Label_MouseLeave;
+  label1.MouseDown += Control_MouseDown;
+  label1.MouseMove += Control_MouseMove;
+  label1.MouseLeave += Control_MouseLeave;
    
   // ---------------- Filename ---------------- //
   item_template.Panel2.Controls.Add(label2);
@@ -141,14 +175,21 @@ begin
   label2.Dock := DockStyle.Fill;
   label2.Location := new Point(0, 0);
   label2.Size := new Size(100, 50);
+  label2.MaximumSize := new Size(100, 0);
   label2.TabIndex := 0;
   label2.Text := filename;
   label2.TextAlign := ContentAlignment.TopCenter;
   label2.AutoEllipsis := true;
   
-  label2.MouseDown += Label_MouseDown;
-  label2.MouseMove += Label_MouseMove;
-  label2.MouseLeave += Label_MouseLeave;
+  label2.MouseDown += Control_MouseDown;
+  label2.MouseMove += Control_MouseMove;
+  label2.MouseLeave += Control_MouseLeave;
+  
+  if is_dir then begin
+    item_template.DoubleClick += Control_DoubleClick;
+    label1.DoubleClick += Control_DoubleClick;
+    label2.DoubleClick += Control_DoubleClick;
+  end;
   
   Result := item_template;
 end;
@@ -157,12 +198,14 @@ end;
 function GetSplitContainer(obj: Object): SplitContainer;
 begin
   var ctrl: Control = obj as Control;
-  Result := ctrl.Parent.Parent as SplitContainer;
+  while not(ctrl is SplitContainer) do 
+    ctrl := ctrl.Parent;
+  Result := ctrl as SplitContainer;
 end;
 
 {$region EventHandlers}
 
-procedure Label_MouseDown(sender: Object; e: MouseEventArgs);
+procedure Control_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   var container: SplitContainer = GetSplitContainer(sender);
   container.BackColor := selected_color;
@@ -170,8 +213,8 @@ begin
   var length: integer = selected_items.Count;
   if ((Control.ModifierKeys and Keys.Control) = Keys.Control) or 
      (length = 0) then
-    selected_items.Add(container) else 
-  begin
+    selected_items.Add(container) 
+  else begin
     if length >= 2 then begin
       for var id := length-1 downto 1 do begin
         selected_items[id].BackColor := unselected_color;
@@ -184,14 +227,14 @@ begin
 end;
 
 
-procedure Label_MouseMove(sender: Object; e: MouseEventArgs);
+procedure Control_MouseMove(sender: Object; e: MouseEventArgs);
 begin
   var container: SplitContainer = GetSplitContainer(sender);
-  container.BackColor := selected_color;
+  container.BackColor := selected_color; 
 end;
 
 
-procedure Label_MouseLeave(sender: Object; e: EventArgs);
+procedure Control_MouseLeave(sender: Object; e: EventArgs);
 begin
   var container: SplitContainer = GetSplitContainer(sender);
   if not selected_items.Contains(container) then

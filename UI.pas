@@ -34,7 +34,7 @@ type
     procedure cls(_t: string := '');
     procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
     procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
-
+    procedure ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -123,9 +123,10 @@ begin
       _server.Resume();
     
     ServerStartedInfo.Visible := true;
-    ServerStartedInfo.Text := 'Сервер успешно запущен' + Chr(10);
-    ServerStartedInfo.Text += 'IPv4:' + _server.ipv4.ToString() + Chr(10);
-    ServerStartedInfo.Text += 'IPv6:' + _server.ipv6.ToString() + Chr(10);
+    ServerStartedInfo.Text := 'Сервер успешно запущен' + #10;
+    ServerStartedInfo.Text += 'IPv4:' + _server.ipv4.ToString() + #10;
+    ServerStartedInfo.Text += 'IPv6:' + _server.ipv6.ToString() + #10;
+    ServerStartedInfo.Text += 'Port:' + _server.port.ToString() + #10;
     
     ServerCreateButton.Text := 'Остановить';
     
@@ -147,7 +148,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = '172.19.0.1';//ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = '172.29.80.1';//ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -220,7 +221,7 @@ begin
             
             // Explorer
             self.LabelPath.Text := path;
-            explorer.init(self.ExplorerTab, self.FilesIconList, self.ExplorerToolBar);
+            explorer.init(self.ExplorerTab, self.FilesIconList, self.ExplorerToolBar, self.ExplorerDirectory_DoubleClick);
             explorer.Update(_server.MessageHandler(E_GET_DIRS),
                             _server.MessageHandler(E_GET_FILES));
             
@@ -344,7 +345,17 @@ begin
 end;
 
 
-
-
+procedure MainWindow.ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
+begin
+  var container := explorer.GetSplitContainer(sender);
+  var folder_name: string = container.Panel2.Controls[0].Text;
+  
+  self.LabelPath.Text += '\' + folder_name;
+  
+  _server.MessageHandler(E_ENTER_FOLDER+folder_name);
+  
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                  _server.MessageHandler(E_GET_FILES));
+end;
 
 end.

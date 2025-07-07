@@ -24,7 +24,7 @@ type
     : Thread;
     
     
-    private port: integer;
+    public port: integer;
     
     
     public constructor();

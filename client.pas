@@ -156,28 +156,32 @@ type TClient = class
   /// Обработка полученных запросов от проводника
   function ExplorerHandler(msg: string): string;
   begin
-    var responce: string;
+    var responce: string = msg;
 
-    case msg of
-      E_GET_PATH: 
-        responce := self.epath;
-      E_GET_DIRS: 
-        responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
-      E_GET_FILES:
-        responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
-      E_ARROW_UP:
-      begin
-        if Directory.GetDirectoryRoot(self.epath) = self.epath+'\' then exit;
-        self.epath := self.epath.Substring(0, self.epath.LastIndexOf('\'));
-        
-        if Directory.GetDirectoryRoot(path) = self.epath+'\' then 
-          self.epath += '\';
-        responce := self.epath;
+    try
+      case msg.Substring(0, 3) of
+        E_GET_PATH: 
+          responce := self.epath;
+        E_GET_DIRS: 
+          responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
+        E_GET_FILES:
+          responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
+        E_ARROW_UP:
+        begin
+          if Directory.GetDirectoryRoot(self.epath) = self.epath+'\' then exit;
+          self.epath := self.epath.Substring(0, self.epath.LastIndexOf('\'));
+          
+          if Directory.GetDirectoryRoot(path) = self.epath+'\' then 
+            self.epath += '\';
+          responce := self.epath;
+        end;
+        E_ENTER_FOLDER:
+          if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then
+            self.epath += '\' + msg.Substring(3);
       end;
-        
+    finally
+      Result := responce;
     end;
-         
-    Result := responce;
   end;
   
   

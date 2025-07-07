@@ -267,9 +267,10 @@ procedure InitializeComponent;
         // 
         // ExplorerToolBar
         // 
-        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.ActiveCaption;
+        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.InactiveCaption;
         self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.LabelPath));
         self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
+        self.ExplorerToolBar.MaximumSize := new System.Drawing.Size(0, 25);
         self.ExplorerToolBar.Name := 'ExplorerToolBar';
         self.ExplorerToolBar.Size := new System.Drawing.Size(826, 25);
         self.ExplorerToolBar.TabIndex := 0;
@@ -293,15 +294,17 @@ procedure InitializeComponent;
         // 
         // LabelPath
         // 
+        self.LabelPath.AutoToolTip := true;
         self.LabelPath.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Text;
         self.LabelPath.Name := 'LabelPath';
         self.LabelPath.Size := new System.Drawing.Size(0, 22);
+        self.LabelPath.TextAlign := System.Drawing.ContentAlignment.MiddleRight;
         self.LabelPath.ToolTipText := 'Путь, по которой вы сейчас находитесь';
         // 
         // splitContainer2
         // 
-        self.splitContainer2.BackColor := System.Drawing.SystemColors.ActiveCaption;
-        self.splitContainer2.Location := new System.Drawing.Point(525, 50);
+        self.splitContainer2.BackColor := System.Drawing.SystemColors.Control;
+        self.splitContainer2.Location := new System.Drawing.Point(282, 42);
         self.splitContainer2.Name := 'splitContainer2';
         self.splitContainer2.Orientation := System.Windows.Forms.Orientation.Horizontal;
         // 
@@ -312,18 +315,20 @@ procedure InitializeComponent;
         // splitContainer2.Panel2
         // 
         self.splitContainer2.Panel2.Controls.Add(self.label1);
-        self.splitContainer2.Size := new System.Drawing.Size(82, 98);
-        self.splitContainer2.SplitterDistance := 57;
+        self.splitContainer2.Panel2MinSize := 50;
+        self.splitContainer2.Size := new System.Drawing.Size(100, 100);
+        self.splitContainer2.SplitterDistance := 46;
         self.splitContainer2.TabIndex := 1;
         // 
         // label2
         // 
+        self.label2.BackColor := System.Drawing.SystemColors.Control;
         self.label2.Dock := System.Windows.Forms.DockStyle.Fill;
         self.label2.ImageKey := 'ini.png';
         self.label2.ImageList := self.FilesIconList;
         self.label2.Location := new System.Drawing.Point(0, 0);
         self.label2.Name := 'label2';
-        self.label2.Size := new System.Drawing.Size(82, 57);
+        self.label2.Size := new System.Drawing.Size(100, 46);
         self.label2.TabIndex := 1;
         // 
         // FilesIconList
@@ -377,13 +382,16 @@ procedure InitializeComponent;
         // 
         // label1
         // 
+        self.label1.Anchor := (System.Windows.Forms.AnchorStyles(((System.Windows.Forms.AnchorStyles.Bottom or System.Windows.Forms.AnchorStyles.Left) 
+                    or System.Windows.Forms.AnchorStyles.Right)));
         self.label1.AutoEllipsis := true;
-        self.label1.Dock := System.Windows.Forms.DockStyle.Fill;
+        self.label1.BackColor := System.Drawing.SystemColors.Control;
         self.label1.Location := new System.Drawing.Point(0, 0);
+        self.label1.MaximumSize := new System.Drawing.Size(100, 0);
         self.label1.Name := 'label1';
-        self.label1.Size := new System.Drawing.Size(82, 37);
+        self.label1.Size := new System.Drawing.Size(100, 56);
         self.label1.TabIndex := 0;
-        self.label1.Text := 'autorun.ini';
+        self.label1.Text := 'autorun_1234567890_1234567890.ini';
         self.label1.TextAlign := System.Drawing.ContentAlignment.TopCenter;
         self.label1.UseCompatibleTextRendering := true;
         // 
