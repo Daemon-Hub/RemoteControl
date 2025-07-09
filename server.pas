@@ -1,7 +1,12 @@
 ﻿unit server;
 
-uses System.Net.Sockets, System.Net, System.Text, System.Threading, Newtonsoft.Json;
-uses types, client;
+uses 
+  System.Net.Sockets, 
+  System.Threading,
+  System.Text,
+  System.Net, 
+  Newtonsoft.Json,
+  types, client;
 
 
 type
@@ -185,7 +190,8 @@ type
     /// Сервис: Принимает заявки клиентов на подключение
     private procedure AcceptService();
     begin
-      while self.AppIsRunning do begin
+      while self.AppIsRunning do
+      begin
         if self.listener.Pending then begin
           var newClient: TcpClient = self.listener.AcceptTcpClient();
           if newClient <> nil then begin
@@ -253,6 +259,62 @@ type
       message := Encoding.UTF8.GetString(buffer, 0, len);
       
       Result := message;
+      self.messageSending := false;
+    end;
+    
+    
+    public function ReceiveFile(fileName, savePath: string): boolean;
+    begin
+      self.messageSending := true;
+      
+      var stream := self.head.client.GetStream();
+      
+      var message: string = fileName;
+      var buffer: array of byte;
+      
+      SetLength(buffer, message.Length);
+      buffer := Encoding.UTF8.GetBytes(message);
+      
+      stream.Write(buffer, 0, buffer.Length);
+      
+      try
+        while not stream.DataAvailable do Thread.Sleep(100);
+      except
+        Result := false;
+        self.messageSending := false;
+        exit;
+      end;
+      
+      var FStream := System.IO.File.Create(savePath);
+      var bytesRead: integer = 1;
+      
+      // Чтение данных и запись в файл
+      while bytesRead > 0 do begin
+        if stream.DataAvailable then begin
+          SetLength(buffer, self.head.client.ReceiveBufferSize);
+          bytesRead := stream.Read(buffer, 0, buffer.Length);
+        end;
+        if not Encoding.UTF8.GetString(buffer).Equals(E_RECEIVE_CONTINUE_C) then
+          continue else
+        if Encoding.UTF8.GetString(buffer).Equals(E_FILE_SUCCESSFULLY_TRANSFERRED) then 
+          break;
+        
+        stream.Flush();
+        
+        SetLength(buffer, E_RECEIVE_CONTINUE_S.Length);
+        buffer := Encoding.UTF8.GetBytes(E_RECEIVE_CONTINUE_S);
+        
+        stream.Write(buffer, 0, buffer.Length);
+        
+        FStream.Write(buffer, 0, bytesRead);
+        
+        
+
+      end;
+      
+      FStream.Close();
+      
+      Result := true;
       self.messageSending := false;
     end;
   

@@ -18,6 +18,10 @@ procedure InitializeComponent;
         self.ConsoleBox := new System.Windows.Forms.TextBox();
         self.contextMenuStrip1 := new System.Windows.Forms.ContextMenuStrip(self.components);
         self.ExplorerTab := new System.Windows.Forms.TabPage();
+        self.ExplorerTabContextMenu := new System.Windows.Forms.ContextMenuStrip(self.components);
+        self.__select_all := new System.Windows.Forms.ToolStripMenuItem();
+        self.__update := new System.Windows.Forms.ToolStripMenuItem();
+        self.__paste := new System.Windows.Forms.ToolStripMenuItem();
         self.ExplorerToolBar := new System.Windows.Forms.ToolStrip();
         self.ExplorerToolBarButtonUp := new System.Windows.Forms.ToolStripButton();
         self.toolStripSeparator1 := new System.Windows.Forms.ToolStripSeparator();
@@ -27,6 +31,11 @@ procedure InitializeComponent;
         self.FilesIconList := new System.Windows.Forms.ImageList(self.components);
         self.label1 := new System.Windows.Forms.Label();
         self.UIIconList := new System.Windows.Forms.ImageList(self.components);
+        self.ExplorerItemContextMenu := new System.Windows.Forms.ContextMenuStrip(self.components);
+        self.__copy := new System.Windows.Forms.ToolStripMenuItem();
+        self.__cut := new System.Windows.Forms.ToolStripMenuItem();
+        self.__rename := new System.Windows.Forms.ToolStripMenuItem();
+        self.__receive_file := new System.Windows.Forms.ToolStripMenuItem();
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -37,11 +46,13 @@ procedure InitializeComponent;
         self.ClientControlTab.SuspendLayout();
         self.ConsoleTab.SuspendLayout();
         self.ExplorerTab.SuspendLayout();
+        self.ExplorerTabContextMenu.SuspendLayout();
         self.ExplorerToolBar.SuspendLayout();
         (System.ComponentModel.ISupportInitialize(self.splitContainer2)).BeginInit();
         self.splitContainer2.Panel1.SuspendLayout();
         self.splitContainer2.Panel2.SuspendLayout();
         self.splitContainer2.SuspendLayout();
+        self.ExplorerItemContextMenu.SuspendLayout();
         self.SuspendLayout();
         // 
         // DefaultTab
@@ -253,6 +264,7 @@ procedure InitializeComponent;
         self.ExplorerTab.AutoScroll := true;
         self.ExplorerTab.BackgroundImageLayout := System.Windows.Forms.ImageLayout.Center;
         self.ExplorerTab.BorderStyle := System.Windows.Forms.BorderStyle.Fixed3D;
+        self.ExplorerTab.ContextMenuStrip := self.ExplorerTabContextMenu;
         self.ExplorerTab.Controls.Add(self.ExplorerToolBar);
         self.ExplorerTab.Controls.Add(self.splitContainer2);
         self.ExplorerTab.ImageKey := 'explorer.png';
@@ -264,6 +276,39 @@ procedure InitializeComponent;
         self.ExplorerTab.Text := 'Проводник';
         self.ExplorerTab.UseVisualStyleBackColor := true;
         self.ExplorerTab.Resize += ExplorerTab_Resize;
+        // 
+        // ExplorerTabContextMenu
+        // 
+        self.ExplorerTabContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.__select_all, self.__update, self.__paste));
+        self.ExplorerTabContextMenu.Name := 'contextMenuStrip2';
+        self.ExplorerTabContextMenu.Size := new System.Drawing.Size(194, 70);
+        // 
+        // __select_all
+        // 
+        self.__select_all.Image := (System.Drawing.Image(resources.GetObject('__select_all.Image')));
+        self.__select_all.Name := '__select_all';
+        self.__select_all.ShortcutKeys := (System.Windows.Forms.Keys((System.Windows.Forms.Keys.Control or System.Windows.Forms.Keys.A)));
+        self.__select_all.Size := new System.Drawing.Size(193, 22);
+        self.__select_all.Text := 'Выбрать все';
+        self.__select_all.Click += __select_all_Click;
+        // 
+        // __update
+        // 
+        self.__update.Image := (System.Drawing.Image(resources.GetObject('__update.Image')));
+        self.__update.Name := '__update';
+        self.__update.ShortcutKeys := System.Windows.Forms.Keys.F5;
+        self.__update.Size := new System.Drawing.Size(193, 22);
+        self.__update.Text := 'Обновить';
+        self.__update.ToolTipText := 'Обновить содержимое окна';
+        self.__update.MouseDown += __update_MouseDown;
+        // 
+        // __paste
+        // 
+        self.__paste.Image := (System.Drawing.Image(resources.GetObject('__paste.Image')));
+        self.__paste.Name := '__paste';
+        self.__paste.ShortcutKeys := (System.Windows.Forms.Keys((System.Windows.Forms.Keys.Control or System.Windows.Forms.Keys.V)));
+        self.__paste.Size := new System.Drawing.Size(193, 22);
+        self.__paste.Text := 'Вставить';
         // 
         // ExplorerToolBar
         // 
@@ -386,7 +431,7 @@ procedure InitializeComponent;
                     or System.Windows.Forms.AnchorStyles.Right)));
         self.label1.AutoEllipsis := true;
         self.label1.BackColor := System.Drawing.SystemColors.Control;
-        self.label1.Location := new System.Drawing.Point(0, 0);
+        self.label1.Location := new System.Drawing.Point(-147, 0);
         self.label1.MaximumSize := new System.Drawing.Size(100, 0);
         self.label1.Name := 'label1';
         self.label1.Size := new System.Drawing.Size(100, 56);
@@ -402,6 +447,45 @@ procedure InitializeComponent;
         self.UIIconList.Images.SetKeyName(0, 'explorer.png');
         self.UIIconList.Images.SetKeyName(1, 'terminal.png');
         self.UIIconList.Images.SetKeyName(2, 'arrow.png');
+        // 
+        // ExplorerItemContextMenu
+        // 
+        self.ExplorerItemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[4](self.__copy, self.__cut, self.__rename, self.__receive_file));
+        self.ExplorerItemContextMenu.Name := 'contextMenuStrip2';
+        self.ExplorerItemContextMenu.Size := new System.Drawing.Size(191, 114);
+        // 
+        // __copy
+        // 
+        self.__copy.Image := (System.Drawing.Image(resources.GetObject('__copy.Image')));
+        self.__copy.Name := '__copy';
+        self.__copy.ShortcutKeys := (System.Windows.Forms.Keys((System.Windows.Forms.Keys.Control or System.Windows.Forms.Keys.C)));
+        self.__copy.Size := new System.Drawing.Size(190, 22);
+        self.__copy.Text := 'Копировать';
+        // 
+        // __cut
+        // 
+        self.__cut.Image := (System.Drawing.Image(resources.GetObject('__cut.Image')));
+        self.__cut.Name := '__cut';
+        self.__cut.ShortcutKeys := (System.Windows.Forms.Keys((System.Windows.Forms.Keys.Control or System.Windows.Forms.Keys.X)));
+        self.__cut.Size := new System.Drawing.Size(190, 22);
+        self.__cut.Text := 'Вырезать';
+        // 
+        // __rename
+        // 
+        self.__rename.Image := (System.Drawing.Image(resources.GetObject('__rename.Image')));
+        self.__rename.Name := '__rename';
+        self.__rename.ShortcutKeys := System.Windows.Forms.Keys.F2;
+        self.__rename.Size := new System.Drawing.Size(190, 22);
+        self.__rename.Text := 'Переименовать';
+        // 
+        // __receive_file
+        // 
+        self.__receive_file.Image := (System.Drawing.Image(resources.GetObject('__receive_file.Image')));
+        self.__receive_file.MergeIndex := 0;
+        self.__receive_file.Name := '__receive_file';
+        self.__receive_file.Size := new System.Drawing.Size(190, 22);
+        self.__receive_file.Text := 'Получить файл';
+        self.__receive_file.Click += __receive_file_Click;
         // 
         // MainWindow
         // 
@@ -427,11 +511,13 @@ procedure InitializeComponent;
         self.ConsoleTab.PerformLayout();
         self.ExplorerTab.ResumeLayout(false);
         self.ExplorerTab.PerformLayout();
+        self.ExplorerTabContextMenu.ResumeLayout(false);
         self.ExplorerToolBar.ResumeLayout(false);
         self.ExplorerToolBar.PerformLayout();
         self.splitContainer2.Panel1.ResumeLayout(false);
         self.splitContainer2.Panel2.ResumeLayout(false);
         (System.ComponentModel.ISupportInitialize(self.splitContainer2)).EndInit();
         self.splitContainer2.ResumeLayout(false);
+        self.ExplorerItemContextMenu.ResumeLayout(false);
         self.ResumeLayout(false);
     end;

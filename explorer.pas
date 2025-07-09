@@ -1,6 +1,7 @@
 ﻿unit explorer;
 
 interface
+{$region interface}
 
 uses
   System,  
@@ -49,9 +50,12 @@ var
   /// На элемент нажали два раза подряд
   Control_DoubleClick: EventHandler;
   
+  /// Контекстное меню появляющееся при левом клике на объект (папка\файл)
+  context_menu: ContextMenuStrip;
+  
   
 /// Инициальизирует необходимые объекты для работы модуля
-procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler);
+procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
                
 /// Обновляет содержимое проводника               
 procedure Update(dirs: string := ''; files: string := ''; is_not_new_dir: boolean := false);
@@ -78,14 +82,17 @@ procedure Control_MouseLeave(sender: Object; e: EventArgs);
 
 {$endregion EventHandlers}
 
+{$endregion interface}
+
 implementation
 
-procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler);
+procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
 begin
   explorer.window := window;
   explorer.icon_list := icon_list;
   explorer.tool_bar := tool_bar;
   explorer.Control_DoubleClick += double_click_event_handle;
+  explorer.context_menu := context_menu;
 
   items := new List<SplitContainer>(10);
   selected_items := new List<SplitContainer>(10);
@@ -140,9 +147,13 @@ function NewItem(filename: string; is_dir: boolean): SplitContainer;
 begin
   var item_template: SplitContainer = new SplitContainer();
   item_template.Orientation := Orientation.Horizontal;
-  item_template.Size := new Size(100, 100);
+  item_template.Size := new Size(100, 110);
+  item_template.Panel1.Size := new Size(100, 60);
+  item_template.Panel2.Size := new Size(100, 50);
   item_template.IsSplitterFixed := true;
   item_template.BackColor := unselected_color;
+  item_template.TabIndex := 1;
+  item_template.ContextMenuStrip := explorer.context_menu;
   
   item_template.MouseDown += Control_MouseDown;
   item_template.MouseMove += Control_MouseMove;
@@ -159,9 +170,11 @@ begin
   label1.ImageKey := is_dir ? 'dir.png':GetIconName(filename);
   label1.ImageList := icon_list;
   label1.Location := new Point(0, 0);
-  label1.Size := new Size(100, 50);
-  label1.MaximumSize := new Size(100, 50);
+  label1.Size := new Size(100, 60);
+  label1.MaximumSize := new Size(100, 60);
   label1.TabIndex := 0;
+  label1.ImageAlign := ContentAlignment.TopCenter;
+  label1.ContextMenuStrip := explorer.context_menu;
   
   label1.MouseDown += Control_MouseDown;
   label1.MouseMove += Control_MouseMove;
@@ -169,8 +182,6 @@ begin
    
   // ---------------- Filename ---------------- //
   item_template.Panel2.Controls.Add(label2);
-  item_template.Size := new Size(100, 100);
-  item_template.TabIndex := 1;
   
   label2.Dock := DockStyle.Fill;
   label2.Location := new Point(0, 0);
@@ -180,6 +191,7 @@ begin
   label2.Text := filename;
   label2.TextAlign := ContentAlignment.TopCenter;
   label2.AutoEllipsis := true;
+  label2.ContextMenuStrip := explorer.context_menu;
   
   label2.MouseDown += Control_MouseDown;
   label2.MouseMove += Control_MouseMove;
@@ -187,8 +199,8 @@ begin
   
   if is_dir then begin
     item_template.DoubleClick += Control_DoubleClick;
-    label1.DoubleClick += Control_DoubleClick;
-    label2.DoubleClick += Control_DoubleClick;
+           label1.DoubleClick += Control_DoubleClick;
+           label2.DoubleClick += Control_DoubleClick;
   end;
   
   Result := item_template;

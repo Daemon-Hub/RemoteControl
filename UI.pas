@@ -35,6 +35,9 @@ type
     procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
     procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
     procedure ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
+    procedure __update_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure __select_all_Click(sender: Object; e: EventArgs);
+    procedure __receive_file_Click(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -63,6 +66,15 @@ type
     ExplorerToolBarButtonUp: ToolStripButton;
     toolStripSeparator1: ToolStripSeparator;
     LabelPath: ToolStripLabel;
+    ExplorerTabContextMenu: System.Windows.Forms.ContextMenuStrip;
+    __paste: ToolStripMenuItem;
+    __update: ToolStripMenuItem;
+    __select_all: ToolStripMenuItem;
+    ExplorerItemContextMenu: System.Windows.Forms.ContextMenuStrip;
+    __copy: ToolStripMenuItem;
+    __cut: ToolStripMenuItem;
+    __rename: ToolStripMenuItem;
+    __receive_file: ToolStripMenuItem;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
@@ -148,7 +160,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = '172.29.80.1';//ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = '172.19.0.1';//ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -221,7 +233,11 @@ begin
             
             // Explorer
             self.LabelPath.Text := path;
-            explorer.init(self.ExplorerTab, self.FilesIconList, self.ExplorerToolBar, self.ExplorerDirectory_DoubleClick);
+            explorer.init(self.ExplorerTab, 
+                          self.FilesIconList, 
+                          self.ExplorerToolBar, 
+                          self.ExplorerDirectory_DoubleClick,
+                          self.ExplorerItemContextMenu);
             explorer.Update(_server.MessageHandler(E_GET_DIRS),
                             _server.MessageHandler(E_GET_FILES));
             
@@ -356,6 +372,43 @@ begin
   
   explorer.Update(_server.MessageHandler(E_GET_DIRS),
                   _server.MessageHandler(E_GET_FILES));
+end;
+
+procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs) :=
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                  _server.MessageHandler(E_GET_FILES));
+
+procedure MainWindow.__select_all_Click(sender: Object; e: EventArgs);
+begin
+  for var id := 0 to ExplorerTab.Controls.Count-1 do
+    if ExplorerTab.Controls[id] is SplitContainer then begin
+      ExplorerTab.Controls[id].BackColor := explorer.selected_color;
+      selected_items.Add(ExplorerTab.Controls[id] as SplitContainer);
+    end;  
+end;
+
+procedure MainWindow.__receive_file_Click(sender: Object; e: EventArgs);
+begin
+  if (explorer.selected_items[0].Panel1.Controls[0] as System.Windows.Forms.Label).ImageKey = 'dir.png' then begin
+    MessageBox.Show('Нельзя передать папку!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error);
+    exit;
+  end;
+  var fileName := explorer.selected_items[0].Panel2.Controls[0].Text;
+  var saveDialog := new SaveFileDialog();
+      saveDialog.Filter := 'All files (*.*)|*.*|Text files (*.txt)|*.txt';
+      saveDialog.Title := 'Сохранить файл как...';
+      saveDialog.FileName := fileName;
+      saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+  
+  if saveDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK then
+  begin
+    var savePath := saveDialog.FileName;
+    
+    if _server.ReceiveFile(E_RECEIVE_FILE+fileName, savePath) then
+      MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk) else 
+      MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error)
+  end else
+      MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 end;
 
 end.
