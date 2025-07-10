@@ -7,7 +7,8 @@ uses
   System.Drawing, 
   System.Threading,
   System.Windows.Forms,  
-  explorer, server, client, types;
+  explorer, server, client, types,
+  Notifications;
 
 type ApplicationState = (SERVER, CLIENT);
 
@@ -160,7 +161,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = '172.19.0.1';//ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -222,6 +223,8 @@ begin
         procedure () -> begin
           if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then 
           begin
+            ErrorHundler($'{_server.head.ip} подключился');
+            
             Thread.Sleep(100);
             ClientControlTab.Enabled := true;
             
@@ -366,12 +369,15 @@ begin
   var container := explorer.GetSplitContainer(sender);
   var folder_name: string = container.Panel2.Controls[0].Text;
   
-  self.LabelPath.Text += '\' + folder_name;
+  var response: string = _server.MessageHandler(E_ENTER_FOLDER+folder_name);
   
-  _server.MessageHandler(E_ENTER_FOLDER+folder_name);
-  
-  explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                  _server.MessageHandler(E_GET_FILES));
+  if response.StartsWith('R@') then 
+    ErrorHundler(response) 
+  else begin
+    self.LabelPath.Text += '\' + folder_name;
+    explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                    _server.MessageHandler(E_GET_FILES));
+  end;                  
 end;
 
 procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs) :=
@@ -404,7 +410,7 @@ begin
   begin
     var savePath := saveDialog.FileName;
     
-    if _server.ReceiveFile(E_RECEIVE_FILE+fileName, savePath) then
+    if _server.ReceiveFile(fileName, savePath) then
       MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk) else 
       MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error)
   end else

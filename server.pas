@@ -1,19 +1,20 @@
 ﻿unit server;
 
 uses 
+  System.Threading.Tasks,
   System.Net.Sockets, 
   System.Threading,
   System.Text,
   System.Net, 
   Newtonsoft.Json,
-  types, client;
+  types, client,
+  Notifications;
 
 
 type
   TcpServer = class
     
     public AppIsRunning: boolean;
-    
     public listener: TcpListener;
     public ipv4, ipv6: IPAddress;
     public stream: NetworkStream;
@@ -21,17 +22,10 @@ type
     public CountOfClients: integer;
     public path: string;
     public messageSending: boolean;
-    
-    public _accept_service, 
-    _pp_service, 
-    _cli_service, 
-    _explorer_service
-    : Thread;
-    
-    
+    public _accept_service, _pp_service: Thread;
     public port: integer;
     
-    
+    /// Представляет конструктор по умолчанию для объекта
     public constructor();
     begin
       self.AppIsRunning := true;
@@ -159,14 +153,13 @@ type
     /// Завершает работу всех сервисов
     public procedure KillAllServices();
     begin
-      // Устанавливаем флаг остановки
       AppIsRunning := false;
       
       // Ждем завершения всех потоков
-      foreach var service in [self._accept_service, self._pp_service, self._cli_service, self._explorer_service] do
+      foreach var service in [self._accept_service, self._pp_service] do
       begin
         if (service <> nil) and service.IsAlive then begin
-          service.Join(200); // Даем 1 секунду на завершение
+          service.Join(200); // Даем 200 млсек на завершение
           try
             if service.IsAlive then service.Abort(); // Принудительное завершение, если не ответил
           except end;
@@ -178,7 +171,7 @@ type
     /// Устанавливает состояние сервисов
     public procedure SetServicesState(state: ServiceState);
     begin
-      foreach var service in [self._accept_service, self._pp_service, self._cli_service, self._explorer_service] do
+      foreach var service in [self._accept_service, self._pp_service] do
         if (service <> nil) then 
           case state of
             ServiceState.Run: service.Start();
@@ -188,7 +181,7 @@ type
     end;
     
     /// Сервис: Принимает заявки клиентов на подключение
-    private procedure AcceptService();
+    private async procedure AcceptService();
     begin
       while self.AppIsRunning do
       begin
@@ -203,10 +196,11 @@ type
     end;
     
     /// Сервис: Следит за состоянием подключения клиентов, реализован на технологии PING-PONG
-    private procedure PPService();
+    private async procedure PPService();
     begin
       while self.AppIsRunning do
       begin
+        
         if (CountOfClients = 0) or messageSending then continue;
         {$omp parallel for}
         foreach var obj in self.Walk() do
@@ -245,13 +239,6 @@ type
       
       stream.Write(buffer, 0, buffer.Length);
       
-      try
-        while not stream.DataAvailable do Thread.Sleep(100);
-      except
-        Result := '';
-        self.messageSending := false;
-        exit;
-      end;
       
       SetLength(buffer, self.head.client.ReceiveBufferSize);
       var len := stream.Read(buffer, 0, buffer.Length); 
@@ -262,61 +249,51 @@ type
       self.messageSending := false;
     end;
     
-    
+    /// Принимает файл fileName и сохраняет его по пути savePath
     public function ReceiveFile(fileName, savePath: string): boolean;
     begin
+      Result := false;
       self.messageSending := true;
-      
+    
       var stream := self.head.client.GetStream();
       
-      var message: string = fileName;
-      var buffer: array of byte;
-      
-      SetLength(buffer, message.Length);
-      buffer := Encoding.UTF8.GetBytes(message);
-      
+      // Отправка команды и имени файла
+      var message := E_RECEIVE_FILE + fileName;
+      var buffer := Encoding.UTF8.GetBytes(message);
       stream.Write(buffer, 0, buffer.Length);
       
-      try
-        while not stream.DataAvailable do Thread.Sleep(100);
-      except
-        Result := false;
-        self.messageSending := false;
-        exit;
-      end;
+      // Получение размера файла (8 байт)
+      var sizeBuffer := new byte[8];
+      stream.Read(sizeBuffer, 0, 8);
+      var fileSize := System.BitConverter.ToInt64(sizeBuffer, 0);
+      
+      var receivedBytes := 0;
+      var readBytes := 0;
+      var chunk := new byte[4096];
       
       var FStream := System.IO.File.Create(savePath);
-      var bytesRead: integer = 1;
-      
-      // Чтение данных и запись в файл
-      while bytesRead > 0 do begin
-        if stream.DataAvailable then begin
-          SetLength(buffer, self.head.client.ReceiveBufferSize);
-          bytesRead := stream.Read(buffer, 0, buffer.Length);
-        end;
-        if not Encoding.UTF8.GetString(buffer).Equals(E_RECEIVE_CONTINUE_C) then
-          continue else
-        if Encoding.UTF8.GetString(buffer).Equals(E_FILE_SUCCESSFULLY_TRANSFERRED) then 
-          break;
+      while receivedBytes < fileSize do begin
+        var toRead := Min(chunk.Length, fileSize - receivedBytes);
+        readBytes := stream.Read(chunk, 0, toRead);
         
-        stream.Flush();
+        if readBytes = 0 then break; // соединение прервано
         
-        SetLength(buffer, E_RECEIVE_CONTINUE_S.Length);
-        buffer := Encoding.UTF8.GetBytes(E_RECEIVE_CONTINUE_S);
-        
-        stream.Write(buffer, 0, buffer.Length);
-        
-        FStream.Write(buffer, 0, bytesRead);
-        
-        
-
+        FStream.Write(chunk, 0, readBytes);
+        receivedBytes += readBytes;
       end;
-      
       FStream.Close();
       
-      Result := true;
+      stream.Read(chunk, 0, 3);
+      var ReceiveEndCode := Encoding.UTF8.GetString(chunk, 0, 3);
+      
+      // Можно ещё принять "успешно завершено" маркер (по желанию)
+      if (receivedBytes = fileSize) and (ReceiveEndCode = E_FILE_SUCCESSFULLY_TRANSFERRED) then
+        Result := true else 
+        System.IO.File.Delete(savePath);
+        
       self.messageSending := false;
     end;
+  
   
   end;// class
 

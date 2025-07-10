@@ -108,7 +108,7 @@ type
     end;
     
     
-    procedure PPService();
+    async procedure PPService();
     begin
       stream := self.client.GetStream();
       var data: array of byte;
@@ -165,11 +165,11 @@ type
       try
         case msg.Substring(0, 3) of
           E_GET_PATH: 
-          responce := self.epath;
+            responce := self.epath;
           E_GET_DIRS: 
-          responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
+            responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
           E_GET_FILES:
-          responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
+            responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
           E_ARROW_UP:
             begin
               if Directory.GetDirectoryRoot(self.epath) = self.epath + SLASH then exit;
@@ -180,42 +180,50 @@ type
               responce := self.epath;
             end;
           E_ENTER_FOLDER:
-            if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then
-              self.epath += SLASH + msg.Substring(3);
+          begin
+            if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then begin
+              try 
+                var tempPath := self.epath + SLASH + msg.Substring(3);
+                Directory.GetDirectories(tempPath);
+                self.epath := tempPath;
+              except on e: Exception do 
+                responce := E_ERROR_OPEN_FOLDER + #10 + E.Message;
+              end; // try
+            end;
+          end; 
           E_RECEIVE_FILE:
             begin
-              var FStream: FileStream = System.IO.File.OpenRead(self.epath + SLASH + msg.Substring(3));
-              var buffer := new byte[1024];
-              var bytesRead: integer;
-          
+              var filePath := self.epath + SLASH + msg.Substring(3);
+              var FStream: FileStream := System.IO.File.OpenRead(filePath);
+              
+              // Получение размера файла
+              var fileSize := FStream.Length;
+              var sizeBuffer := System.BitConverter.GetBytes(fileSize); // 8 байт Int64
+              
+              // Отправка 8 байт с размером файла
+              stream.Write(sizeBuffer, 0, sizeBuffer.Length);
+              
+              // Отправка файла по частям
+              var buffer := new byte[4096];
+              var bytesRead := 0;
+              
               repeat
-
                 bytesRead := FStream.Read(buffer, 0, buffer.Length);
-                
-                stream.Write(buffer, 0, bytesRead);
-                
-                if stream.DataAvailable then
-                  stream.Read(buffer, 0, buffer.Length);
-                
-                if not Encoding.UTF8.GetString(buffer).Equals(E_RECEIVE_CONTINUE_S) then
-                  continue;
-                
+                if bytesRead > 0 then
+                  stream.Write(buffer, 0, bytesRead);
               until bytesRead = 0;
               
               FStream.Close();
-              Thread.Sleep(100);
-                
-              responce := E_FILE_SUCCESSFULLY_TRANSFERRED;
               
-              while stream.DataAvailable do Thread.Sleep(100);
-              
-            end;
+              // Отправка финального подтверждения (по желанию)
+              responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
+            end;    
         
         end; // case
       finally
         Result := responce;
       end; 
-    end;
+    end;    
   
   
   end; // class
