@@ -3,7 +3,7 @@ unit cmd;
 
 interface
 
-uses System.Diagnostics, System.Text;
+uses System.Diagnostics, System.Text, types;
 
 var
   __initialized__: boolean = false;
@@ -30,7 +30,6 @@ procedure SetPath(d: string);
 procedure RunCustomCommand(command: string);
 
 function IsCustomCommand(command: string): boolean;
-function Strip(str: string; chars: string := ' '): string;
 
 implementation
 
@@ -137,19 +136,6 @@ procedure MKDIR(dirName: string) := run($'mkdir {dirName}');
 /// Установить рабочую дирректорию
 procedure SetPath(d: string) := path := d;
 
-/// 
-function Strip(str, chars: string): string;
-begin
-  var from := 0;
-  var to_ := 0;
-  for var i := 1 to str.Length do
-    if not (str[i] in chars) then
-      if from = 0 then from := i else
-        to_ := i;
-  if (from = 0) and (to_ = 0) then exit('');
-  if to_ < from then
-    to_ := from;
-  Result := Copy(str, from, to_ - from + 1);
-end;
+
 
 end.

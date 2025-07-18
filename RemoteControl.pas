@@ -1,5 +1,5 @@
 ﻿{$apptype windows}
-{$mainresource 'release.res'}
+{$mainresource 'debug.res'}
 
 
 uses UI;

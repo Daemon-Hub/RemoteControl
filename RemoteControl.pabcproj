@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project FileVersion="2" Name="RemoteControl" MainFile="RemoteControl.pas" OutputFileName="RemoteControl.exe" OutputDirectory="bin" ProjectType="ConsoleApp" IncludeDebugInfo="False" GenerateXMLDoc="False" CommandLineArguments="" AppIcon="" DeleteEXE="False" DeletePDB="True" Product="" Company="" Trademark="" Copyright="" Title="" Description="" MajorVersion="0" MinorVersion="0" BuildVersion="0" RevisionVersion="0">
+<Project FileVersion="2" Name="RemoteControl" MainFile="RemoteControl.pas" OutputFileName="RemoteControl.exe" OutputDirectory="bin" ProjectType="ConsoleApp" IncludeDebugInfo="True" GenerateXMLDoc="False" CommandLineArguments="" AppIcon="" DeleteEXE="False" DeletePDB="True" Product="" Company="" Trademark="" Copyright="" Title="" Description="" MajorVersion="0" MinorVersion="0" BuildVersion="0" RevisionVersion="0">
   <Items>
     <Item Type="SourceFile" Name="RemoteControl.pas" Path="RemoteControl.pas" />
     <Item Type="SourceFile" Name="client.pas" Path="client.pas" />
@@ -9,9 +9,11 @@
     <Item Type="SourceFile" Name="UI.pas" Path="UI.pas" />
     <Item Type="SourceFile" Name="explorer.pas" Path="explorer.pas" />
     <Item Type="SourceFile" Name="Notifications.pas" Path="Notifications.pas" />
+    <Item Type="SourceFile" Name="ListOfConnectedDevices.pas" Path="ListOfConnectedDevices.pas" />
     <Item Type="Reference" AssemblyName="System" FullAssemblyName="System.dll" />
     <Item Type="Reference" AssemblyName="System.Drawing" FullAssemblyName="System.Drawing.dll" />
     <Item Type="Reference" AssemblyName="System.Windows.Forms" FullAssemblyName="System.Windows.Forms.dll" />
     <Item Type="Reference" AssemblyName="Newtonsoft.Json" FullAssemblyName="Newtonsoft.Json.dll" />
+    <Item Type="Reference" AssemblyName="System.Management" FullAssemblyName="System.Management.dll" />
   </Items>
 </Project>

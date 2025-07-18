@@ -10,6 +10,7 @@ procedure InitializeComponent;
         self.clientConnectButton := new System.Windows.Forms.Button();
         self.ServerTab := new System.Windows.Forms.TabPage();
         self.splitContainer1 := new System.Windows.Forms.SplitContainer();
+        self.ServerIPAddr := new System.Windows.Forms.TextBox();
         self.CountOfClientsLabel := new System.Windows.Forms.Label();
         self.ServerStartedInfo := new System.Windows.Forms.Label();
         self.ServerCreateButton := new System.Windows.Forms.Button();
@@ -36,6 +37,7 @@ procedure InitializeComponent;
         self.__cut := new System.Windows.Forms.ToolStripMenuItem();
         self.__rename := new System.Windows.Forms.ToolStripMenuItem();
         self.__receive_file := new System.Windows.Forms.ToolStripMenuItem();
+        self.OpenListOfConnectedDevices := new System.Windows.Forms.Button();
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -153,6 +155,8 @@ procedure InitializeComponent;
         // 
         // splitContainer1.Panel1
         // 
+        self.splitContainer1.Panel1.Controls.Add(self.OpenListOfConnectedDevices);
+        self.splitContainer1.Panel1.Controls.Add(self.ServerIPAddr);
         self.splitContainer1.Panel1.Controls.Add(self.CountOfClientsLabel);
         self.splitContainer1.Panel1.Controls.Add(self.ServerStartedInfo);
         self.splitContainer1.Panel1.Controls.Add(self.ServerCreateButton);
@@ -164,11 +168,19 @@ procedure InitializeComponent;
         self.splitContainer1.SplitterDistance := 217;
         self.splitContainer1.TabIndex := 4;
         // 
+        // ServerIPAddr
+        // 
+        self.ServerIPAddr.Location := new System.Drawing.Point(9, 63);
+        self.ServerIPAddr.Name := 'ServerIPAddr';
+        self.ServerIPAddr.Size := new System.Drawing.Size(167, 24);
+        self.ServerIPAddr.TabIndex := 4;
+        self.ServerIPAddr.Text := '25.36.102.221';
+        // 
         // CountOfClientsLabel
         // 
         self.CountOfClientsLabel.AutoSize := true;
         self.CountOfClientsLabel.Font := new System.Drawing.Font('Microsoft Sans Serif', 12, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
-        self.CountOfClientsLabel.Location := new System.Drawing.Point(556, 3);
+        self.CountOfClientsLabel.Location := new System.Drawing.Point(568, 39);
         self.CountOfClientsLabel.Name := 'CountOfClientsLabel';
         self.CountOfClientsLabel.Size := new System.Drawing.Size(229, 24);
         self.CountOfClientsLabel.TabIndex := 2;
@@ -452,7 +464,7 @@ procedure InitializeComponent;
         // 
         self.ExplorerItemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[4](self.__copy, self.__cut, self.__rename, self.__receive_file));
         self.ExplorerItemContextMenu.Name := 'contextMenuStrip2';
-        self.ExplorerItemContextMenu.Size := new System.Drawing.Size(191, 114);
+        self.ExplorerItemContextMenu.Size := new System.Drawing.Size(191, 92);
         // 
         // __copy
         // 
@@ -486,6 +498,18 @@ procedure InitializeComponent;
         self.__receive_file.Size := new System.Drawing.Size(190, 22);
         self.__receive_file.Text := 'Получить файл';
         self.__receive_file.Click += __receive_file_Click;
+        // 
+        // OpenListOfConnectedDevices
+        // 
+        self.OpenListOfConnectedDevices.BackColor := System.Drawing.SystemColors.Info;
+        self.OpenListOfConnectedDevices.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.OpenListOfConnectedDevices.Location := new System.Drawing.Point(522, 3);
+        self.OpenListOfConnectedDevices.Name := 'OpenListOfConnectedDevices';
+        self.OpenListOfConnectedDevices.Size := new System.Drawing.Size(319, 33);
+        self.OpenListOfConnectedDevices.TabIndex := 5;
+        self.OpenListOfConnectedDevices.Text := 'Открыть список подключённых устройств';
+        self.OpenListOfConnectedDevices.UseVisualStyleBackColor := false;
+        self.OpenListOfConnectedDevices.Click += OpenListOfConnectedDevices_Click;
         // 
         // MainWindow
         // 

@@ -6,9 +6,11 @@ uses
   System, 
   System.Drawing, 
   System.Threading,
+  System.Threading.Tasks,
   System.Windows.Forms,  
   explorer, server, client, types,
-  Notifications;
+  Notifications, 
+  ListOfConnectedDevices;
 
 type ApplicationState = (SERVER, CLIENT);
 
@@ -39,6 +41,7 @@ type
     procedure __update_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __select_all_Click(sender: Object; e: EventArgs);
     procedure __receive_file_Click(sender: Object; e: EventArgs);
+    procedure OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -76,6 +79,8 @@ type
     __cut: ToolStripMenuItem;
     __rename: ToolStripMenuItem;
     __receive_file: ToolStripMenuItem;
+    ServerIPAddr: TextBox;
+    OpenListOfConnectedDevices: Button;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
@@ -85,6 +90,7 @@ type
       InitializeComponent;
       _server_service := new Thread(ServerConnectionService);
       _server_service.Name := 'service';
+      types.InitWinIcons();
     end;
   end;
 
@@ -223,15 +229,18 @@ begin
         procedure () -> begin
           if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then 
           begin
+            Thread.Sleep(100);
+            
+            _server.SelectFirstClient();
             ErrorHundler($'{_server.head.ip} подключился');
             
-            Thread.Sleep(100);
             ClientControlTab.Enabled := true;
             
             var path: string = _server.MessageHandler(GETPATH);
             
             // Console
             consoleBox.AppendText(path+'>');
+            
             consoleBox.SelectionStart := consoleBox.Text.Length;
             
             // Explorer
@@ -241,6 +250,7 @@ begin
                           self.ExplorerToolBar, 
                           self.ExplorerDirectory_DoubleClick,
                           self.ExplorerItemContextMenu);
+                          
             explorer.Update(_server.MessageHandler(E_GET_DIRS),
                             _server.MessageHandler(E_GET_FILES));
             
@@ -249,6 +259,7 @@ begin
           begin
             cls();
             ClientControlTab.Enabled := false;
+            _server.selectedClient := nil;
           end;
           
           _server_count_of_clients := _server.CountOfClients;
@@ -380,9 +391,11 @@ begin
   end;                  
 end;
 
+
 procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs) :=
   explorer.Update(_server.MessageHandler(E_GET_DIRS),
                   _server.MessageHandler(E_GET_FILES));
+
 
 procedure MainWindow.__select_all_Click(sender: Object; e: EventArgs);
 begin
@@ -392,6 +405,7 @@ begin
       selected_items.Add(ExplorerTab.Controls[id] as SplitContainer);
     end;  
 end;
+
 
 procedure MainWindow.__receive_file_Click(sender: Object; e: EventArgs);
 begin
@@ -416,5 +430,12 @@ begin
   end else
       MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 end;
+
+
+procedure MainWindow.OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
+begin
+  new ListWindow(_server);
+end;
+
 
 end.

