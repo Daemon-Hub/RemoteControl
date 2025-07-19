@@ -1,5 +1,6 @@
 procedure InitializeComponent;
     begin
+        var resources: System.ComponentModel.ComponentResourceManager := new System.ComponentModel.ComponentResourceManager(typeof(ListWindow));
         self.ConnectedDevice := new System.Windows.Forms.SplitContainer();
         self.StateButton := new System.Windows.Forms.RadioButton();
         self.DeviceIcon := new System.Windows.Forms.Label();
@@ -80,6 +81,7 @@ procedure InitializeComponent;
         // 
         self.ClientSize := new System.Drawing.Size(654, 384);
         self.Controls.Add(self.ConnectedDevice);
+        self.Icon := (System.Drawing.Icon(resources.GetObject('$this.Icon')));
         self.Name := 'ListWindow';
         self.Text := 'Подключёные устройства ';
         self.Load += ListWindow_Load;

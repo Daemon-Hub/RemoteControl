@@ -1,4 +1,4 @@
-﻿Unit Notifications;
+﻿unit Notifications;
 
 interface
 
@@ -29,22 +29,21 @@ type
       var screenBounds := Screen.PrimaryScreen.WorkingArea;
       self.Location := new Point(screenBounds.Width - self.Width - 10, screenBounds.Height - self.Height - 10);
       
-      self.MessageText.Text := msg;
+      self.MessageText.Text := #13+'         '+msg;
       
       // Закруглённые углы
-      var rectangle := new Rectangle(0, 0, Self.Width, Self.Height);
-      var radius := 20;
-      var graphicsPath := new System.Drawing.Drawing2D.GraphicsPath();
-          graphicsPath.AddArc(rectangle.X, rectangle.Y, radius * 2, radius * 2, 180, 90);
-          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Y, radius * 2, radius * 2, 270, 90);
-          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Height - radius * 2, radius * 2, radius * 2, 0, 90);
-          graphicsPath.AddArc(rectangle.X, rectangle.Height - radius * 2, radius * 2, radius * 2, 90, 90);
-          graphicsPath.CloseFigure();
-      Self.Region := new System.Drawing.Region(graphicsPath);
+//      var rectangle := new Rectangle(0, 0, Self.Width, Self.Height);
+//      var radius := 20;
+//      var graphicsPath := new System.Drawing.Drawing2D.GraphicsPath();
+//          graphicsPath.AddArc(rectangle.X, rectangle.Y, radius * 2, radius * 2, 180, 90);
+//          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Y, radius * 2, radius * 2, 270, 90);
+//          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Height - radius * 2, radius * 2, radius * 2, 0, 90);
+//          graphicsPath.AddArc(rectangle.X, rectangle.Height - radius * 2, radius * 2, radius * 2, 90, 90);
+//          graphicsPath.CloseFigure();
+//      Self.Region := new System.Drawing.Region(graphicsPath);
       
       self.FormShowAnimation.Start();
       self.Show();
-      self.NotificationLifeTimer.Start();
     end;
   end;
 
@@ -59,11 +58,10 @@ begin
   var g := Args.Graphics;
   var rect := Self.ClientRectangle;
   var gradientBrush := new System.Drawing.Drawing2D.LinearGradientBrush(
-    rect,
-    Color.FromArgb(0, 128, 0),
-    Color.FromArgb(144, 238, 144),
-    System.Drawing.Drawing2D.LinearGradientMode.Vertical
-  );
+  rect,
+  Color.FromArgb(0, 128, 0),
+  Color.FromArgb(144, 238, 144),
+  System.Drawing.Drawing2D.LinearGradientMode.Vertical);
   g.FillRectangle(gradientBrush, rect);
 end;
 
@@ -82,29 +80,34 @@ end;
 procedure Notification.NotificationLifeTimer_Tick(sender: System.Object; e: System.EventArgs);
 begin
   self.NotificationLifeTimer.Stop(); 
-  self.Close();
+  self.FormClosingAnimation.Start();
 end;
 
 procedure Notification.Notification_ShownAnimation_Tick(sender: Object; e: EventArgs);
 begin
   if self.Opacity < 0.95 then
-    self.Opacity += 0.05 else
+    self.Opacity += 0.05 
+  else begin
     self.FormShowAnimation.Stop();
+    self.NotificationLifeTimer.Start();
+  end;
 end;
 
 
 procedure Notification.Notification_ClosingAnimation_Tick(sender: Object; e: EventArgs);
 begin
   if self.Opacity > 0 then
-    self.Opacity -= 0.05 else 
+    self.Opacity -= 0.05 
+  else begin
     self.FormClosingAnimation.Stop();
+    self.Close();
+  end;
 end;
 
 // ---------------------------------------------------------------------------- //
-async procedure ErrorHundler(error: string);
+procedure ErrorHundler(error: string);
 begin
   new Notification(error);
-  
 end;
 
 

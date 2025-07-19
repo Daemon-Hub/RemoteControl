@@ -16,28 +16,23 @@ type
     
     public AppIsRunning: boolean;
     public listener: TcpListener;
-    public ipv4, ipv6: IPAddress;
-    public stream: NetworkStream;
+    public ipv4: string;
     public head, tail: TClient;
-    public CountOfClients: integer;
+    public CountOfClients: byte;
     public path: string;
     public messageSending: boolean;
     public _accept_service, _pp_service: Thread;
-    public port: integer;
+    public port: word;
     public selectedClient: TClient;
     
     /// Представляет конструктор по умолчанию для объекта
-    public constructor(__ip: string := '');
+    public constructor();
     begin
-      self.AppIsRunning := true;
-      if __ip = '' then
-        self.ipv4 := Dns.GetHostByName(Dns.GetHostName()).AddressList.Last() else
-        self.ipv4 := IPAddress.Parse(__ip);
-      self.ipv6 := Dns.GetHostAddresses(Dns.GetHostName())[0];
+      self.ipv4 := self.GetIPAddrs();
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
       self.listener := new TcpListener(IPAddress.Any, self.port);
       self._accept_service := new Thread(AcceptService);
-      {self._pp_service := new Thread(PPService);}
+      self._pp_service := new Thread(PPService);
     end;
     
     /// Возобновляет работу сервера и всех его сервисов
@@ -61,6 +56,17 @@ type
     begin
       self.SetServicesState(ServiceState.Stop);
       self.listener.Stop();
+    end;
+    
+    function GetIPAddrs(): string;
+    begin
+      var res: string = '';
+      foreach var addr in Dns.GetHostByName(Dns.GetHostName()).AddressList do begin
+        if addr.ToString() in ['172.19.0.1', '0.0.0.0'] then
+          continue;
+        res += addr.ToString() + ', ';
+      end;
+      Result := res;
     end;
     
     /// Добавляет одного клиента в конец очереди
@@ -159,7 +165,7 @@ type
       AppIsRunning := false;
       
       // Ждем завершения всех потоков
-      foreach var service in [self._accept_service{, self._pp_service}] do
+      foreach var service in [self._accept_service, self._pp_service] do
       begin
         if (service <> nil) and service.IsAlive then begin
           service.Join(200); // Даем 200 млсек на завершение
@@ -174,7 +180,7 @@ type
     /// Устанавливает состояние сервисов
     public procedure SetServicesState(state: ServiceState);
     begin
-      foreach var service in [self._accept_service {, self._pp_service}] do
+      foreach var service in [self._accept_service, self._pp_service] do
         if (service <> nil) then 
           case state of
             ServiceState.Run: service.Start();
@@ -206,24 +212,35 @@ type
       while self.AppIsRunning do
       begin
         
-        if (CountOfClients = 0) or messageSending then continue;
-        {$omp parallel for}
-        foreach var obj in self.Walk() do
-        begin
-          var data: array of byte;
-          try
-            stream := obj.client.GetStream();
-            
-            data := Encoding.UTF8.GetBytes('PING');
-            stream.Write(data, 0, 4);
-            
-            var responseStatus := stream.Read(data, 0, 4);
-            if (messageSending = false) and (responseStatus = 0) then
-              self.RemoveClient(obj);
-          except
-            self.RemoveClient(obj);
+        if (CountOfClients > 0) and (self.messageSending = false) then begin
+          self.messageSending := true;
+          
+          var __connected_devices := self.Walk();
+          
+          {$omp parallel for}
+          for id: byte := 0 to __connected_devices.Length-1 do
+          begin
+            var data: array of byte;
+            try
+              var stream := __connected_devices[id].client.GetStream();
+              
+              data := Encoding.UTF8.GetBytes('PING');
+              stream.Write(data, 0, 4);
+              
+              var responseStatus := stream.Read(data, 0, 4);
+              stream.Flush();
+              
+              if (messageSending = false) and (responseStatus = 0) then
+                self.RemoveClient(__connected_devices[id]);
+              
+            except 
+              self.RemoveClient(__connected_devices[id]);
+            end;
           end;
+          
+          self.messageSending := false;
         end;
+        
         Thread.Sleep(10000);
       end; // while
     end;
@@ -232,6 +249,9 @@ type
     /// Отправка сообщений
     public function MessageHandler(msg: string; clnt: TClient := nil): string;
     begin
+      while self.messageSending do 
+        Thread.Sleep(10);
+      
       self.messageSending := true;
       
       var selectClient := clnt = nil ? self.selectedClient : clnt;
@@ -260,10 +280,12 @@ type
     /// Принимает файл fileName и сохраняет его по пути savePath
     public function ReceiveFile(fileName, savePath: string): boolean;
     begin
-      Result := false;
+      while self.messageSending do 
+        Thread.Sleep(10);
+      
       self.messageSending := true;
     
-      var stream := self.head.client.GetStream();
+      var stream := self.selectedClient.client.GetStream();
       
       // Отправка команды и имени файла
       var message := E_RECEIVE_FILE + fileName;

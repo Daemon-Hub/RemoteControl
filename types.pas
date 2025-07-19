@@ -1,5 +1,7 @@
 ﻿unit types;
 
+interface
+
 uses System.Collections.Generic;
 
 const
@@ -23,6 +25,11 @@ const
   //  ERROR CODES  //
   E_ERROR_OPEN_FOLDER = 'R@21';
 
+procedure InitWinIcons();
+
+function ImageFromBase64(base64: string): System.Drawing.Image;
+function Strip(str: string; chars: string := ' '): string;
+
 type
   ServiceState = (Run, Stop, Resume);
   WindowsInformation = record
@@ -44,6 +51,10 @@ var
   WinIcons: Dictionary<string, System.Drawing.Image>;
 
 
+
+
+implementation
+
 function ImageFromBase64(base64: string): System.Drawing.Image;
 begin
   var bytes := Convert.FromBase64String(base64);
@@ -62,8 +73,8 @@ begin
   WinIcons.Add('computer', ImageFromBase64('iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAACqUlEQVR4nO2czWoTYRiFgwsV0QuQulRvQXQpE3TnwlpIDG46pZeRtSD5ATfFQLSZLpo6k1HBzatTkaQ3IXwXIC2o2y5Gpi6UaBfNDJ5M8jxwtjN5z3l/QhapVAAAAAAAAAAAAP7g/mP/mldb3/Nq/o9q3U+Rf6oHJx7V/NCrbd4ozvy6f4Tp/pkaL/Ps7pPNldwBZJ2P+f6MU7++W0AArJ3q7AF8yx3A9EPNHSN3ugfTfhGA+78NQwBOO6EE4AhgqW9ElRtwTADqLjQmQG+EsYL0ZphA3ABHAPIuNCZAb4SxgvRmmEDcAEcA8i40JkBvhLGC9GaYQNwARwDyLjQmQG+EsYL0ZphA3ABHAPIuNCZAb4SxgvRmmEDcAEcA8i40JkBvhLGC9GaYQNwARwDyLjQmQG+EsYL0ZphA3ABHAPIuNCZAb4SxgvRmmEDcAEcA8i40JkBvhC3qCkL+mTwggLq2aQigTgBLvbYqeYmTSYomM3tAAIm2gRY2gGcvtlPvYSP1VhtpqxfIP8/SBeCtNtJb9x6cqPqosbgBjJLxd3URcWkDGOf/w6ZRMgn1hUz+UrZ2shAy81u9gfzz/Eujj+O93AFE9vlmnIwP1cXEpdP46M3+wfVKEbz7cLASJ5PdeV1H8Rwp8yjr/MLMV9Lv9y92gijNo273/QV1HaWlNQiv5g0ge4a6jtLS3R7dyRtAeye6ra6jtLSDaCN3AEG0oa6jtHSC6FXeALJnqOsoJc3h8Hx7EH3NPwHhIYd4BrqDaK2A7v/1TWgQrRXfIgvM1tbbS50g/FJUAO0gdM+Hw8vqukpBs9k8V9Dunw7hZfZsdX1zy9NefKW189prD8JPRZv/W+F+9o7sXep654ZY/NNBZdmJCYAAlpqYCQAAAAAAAAAAAACoLD4/AZVkZ5PvUg+EAAAAAElFTkSuQmCC'));
 end;
 
-/// 
-function Strip(str: string; chars: string := ' '): string;
+/// Удаляет вначале и в конце строки все chars
+function Strip(str, chars: string): string;
 begin
   var from := 0;
   var to_ := 0;

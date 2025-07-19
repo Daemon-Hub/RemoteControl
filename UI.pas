@@ -32,8 +32,10 @@ type
     procedure ServerConnectionService();
     procedure MainWindow_FormClosing(sender: Object; e: FormClosingEventArgs);
     procedure ClientIPMask_KeyPress(sender: Object; e: KeyPressEventArgs);
+    procedure ClientConnectionStateMonitoring();
     procedure ConsoleBox_KeyDown(sender: Object; e: KeyEventArgs);
     procedure ConsoleBox_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure UpdateCountOfClientsLabel();
     procedure cls(_t: string := '');
     procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
     procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
@@ -115,12 +117,15 @@ end;
 
 procedure MainWindow.ServerCreate_Click(sender: Object; e: EventArgs);
 begin
+  _server_count_of_clients := 0;
   
   if _server_is_working then begin
     
     _server_service.Suspend();
     _server_is_working := false;
     _server.Stop();
+    _server.Finalize();
+    _server := nil;
     
     ServerStartedInfo.Visible := false;
     
@@ -128,34 +133,32 @@ begin
     
     ClientControlTab.Enabled := false;
     
+    self.UpdateCountOfClientsLabel();
+    
   end else begin
     
     AppState := ApplicationState.SERVER;
     
     _server_is_working := true;
-    _server_count_of_clients := 0;
     
     if _server = nil then begin
       _server := new TcpServer();
       _server.Start();
-    end else 
-      _server.Resume();
+    end;
     
     ServerStartedInfo.Visible := true;
     ServerStartedInfo.Text := 'Сервер успешно запущен' + #10;
-    ServerStartedInfo.Text += 'IPv4:' + _server.ipv4.ToString() + #10;
-    ServerStartedInfo.Text += 'IPv6:' + _server.ipv6.ToString() + #10;
+    ServerStartedInfo.Text += 'IPs:' + _server.ipv4.ToString() + #10;
     ServerStartedInfo.Text += 'Port:' + _server.port.ToString() + #10;
     
     ServerCreateButton.Text := 'Остановить';
     
     try
-    _server_service.Start();
+      _server_service.Start();
     except 
-    _server_service.Resume();
+      _server_service.Resume();
       
     end;
-      
     
   end;
   
@@ -167,7 +170,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = '172.19.0.1';//ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -179,21 +182,24 @@ begin
     
     Thread.Create(
       () -> begin
-        self.Invoke( procedure () -> begin
-          ClientIPMask.Enabled := false;
-          while (_client.client = nil) and (_client.retry < 5) do
-            clientConnectingProgress.Increment(_client.retry - clientConnectingProgress.Value);
-          
-          clientConnectingProgress.Increment(5);
-          clientConnectState.Text := _client.ConnectedMsg();
-          if _client.client = nil then begin
-            ClientIPMask.Enabled := true;
-            _client := nil;
-          end else begin
-            clientConnectButton.Text := 'Отключиться';
-            AppState := ApplicationState.CLIENT;
-          end;
-        end);
+        self.Invoke( 
+          procedure () -> begin
+            ClientIPMask.Enabled := false;
+            while (_client.client = nil) and (_client.retry < 5) do
+              clientConnectingProgress.Increment(_client.retry - clientConnectingProgress.Value);
+            
+            clientConnectingProgress.Increment(5);
+            clientConnectState.Text := _client.ConnectedMsg();
+            if _client.client = nil then begin
+              ClientIPMask.Enabled := true;
+              _client := nil;
+            end else begin
+              clientConnectButton.Text := 'Отключиться';
+              AppState := ApplicationState.CLIENT;
+              Thread.Create(procedure () -> ClientConnectionStateMonitoring).Start();
+            end;
+          end
+        );
       end
     ).Start();
   end
@@ -212,6 +218,25 @@ begin
 end;
 
 
+procedure MainWindow.ClientConnectionStateMonitoring();
+begin
+
+  while _client.AppIsRunning do
+    Thread.Sleep(1000);
+  
+  ClientIPMask.Enabled := true;
+  
+  clientConnectButton.Text := 'Подключиться';
+  clientConnectState.Text := 'Не подключено';
+  
+  clientConnectingProgress.Value := 0;
+  
+  _client := nil;
+  
+  ErrorHundler('Сервер закрыл соединение!');
+end;
+
+
 procedure MainWindow.ClientIPMask_KeyPress(sender: Object; e: KeyPressEventArgs);
 begin
   if e.KeyChar = #13 then 
@@ -223,16 +248,15 @@ procedure MainWindow.ServerConnectionService();
 begin
   while _server_is_working do begin
     if _server.CountOfClients <> _server_count_of_clients then begin
-      
+            
       // Используем Invoke для безопасного доступа к UI-элементам
       self.Invoke(
         procedure () -> begin
-          if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then 
-          begin
+          if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then begin
             Thread.Sleep(100);
             
             _server.SelectFirstClient();
-            ErrorHundler($'{_server.head.ip} подключился');
+            ErrorHundler($'{_server.selectedClient.WinInfo.ComputerName} подключился{#13}IP:{_server.selectedClient.ip}');
             
             ClientControlTab.Enabled := true;
             
@@ -255,21 +279,27 @@ begin
                             _server.MessageHandler(E_GET_FILES));
             
           end 
-          else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then 
-          begin
+          else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then begin
             cls();
             ClientControlTab.Enabled := false;
             _server.selectedClient := nil;
           end;
-          
-          _server_count_of_clients := _server.CountOfClients;
-          CountOfClientsLabel.Text := $'{Copy(CountOfClientsLabel.Text, 1, 23)} {_server_count_of_clients}';
+         
         end
       );
+      _server_count_of_clients := _server.CountOfClients;
+      self.UpdateCountOfClientsLabel();
       
     end;
   end; // while
+
 end;
+
+
+procedure MainWindow.UpdateCountOfClientsLabel := CountOfClientsLabel.Text := 
+                                       CountOfClientsLabel.Text.Substring(0, 
+                                       CountOfClientsLabel.Text.IndexOf(':')+1) +
+                                       _server_count_of_clients.ToString;
 
 /// Очищает консольное окно
 procedure MainWindow.cls(_t: string) := ConsoleBox.Text := _t;
@@ -362,9 +392,8 @@ end;
 
 
 procedure MainWindow.ExplorerTab_Resize(
-  sender: Object; 
-  e: EventArgs
-) := explorer.Update(is_not_new_dir := true);
+          sender: Object; e: EventArgs) := 
+          explorer.Update(is_not_new_dir := true);
 
 
 procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
