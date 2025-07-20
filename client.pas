@@ -184,72 +184,76 @@ type
     begin
       var responce: string = msg;
       
-      try
-        case msg.Substring(0, 3) of
-          E_GET_PATH: 
-            responce := self.epath;
-          E_GET_DIRS: 
-            responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
-          E_GET_FILES:
-            responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
-          E_ARROW_UP:
-            begin
-              Println(self.epath);
-              Println(Directory.GetDirectoryRoot(self.epath));
-              if Directory.GetDirectoryRoot(self.epath) = self.epath + SLASH then exit;
-              self.epath := self.epath.Substring(0, self.epath.LastIndexOf(SLASH));
-              Println(self.epath);
-              
-              if Directory.GetDirectoryRoot(path) = self.epath + SLASH then 
-                self.epath += SLASH;
-              responce := self.epath;
-            end;
-          E_ENTER_FOLDER:
+      case msg.Substring(0, 3) of
+        E_GET_PATH: 
+          responce := self.epath;
+        E_GET_DIRS: 
+          responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
+        E_GET_FILES:
+          responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
+        E_ARROW_UP:
           begin
-            if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then begin
-              try 
-                var tempPath: string;
-                if self.epath.LastIndexOf(SLASH)+1 = self.epath.Length then
-                  tempPath := self.epath + msg.Substring(3) else
-                  tempPath := self.epath + SLASH + msg.Substring(3);
-                Directory.GetDirectories(tempPath);
-                self.epath := tempPath;
-              except on e: Exception do 
-                responce := E_ERROR_OPEN_FOLDER + #10 + E.Message;
-              end; // try
+            if Directory.GetDirectoryRoot(self.epath) = self.epath + SLASH then exit;
+            self.epath := self.epath.Substring(0, self.epath.LastIndexOf(SLASH));
+            
+            if Directory.GetDirectoryRoot(path) = self.epath + SLASH then 
+              self.epath += SLASH;
+            responce := self.epath;
+          end;
+        E_ENTER_FOLDER:
+        begin
+          if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then begin
+            try 
+              var tempPath: string;
+              if self.epath.LastIndexOf(SLASH)+1 = self.epath.Length then
+                tempPath := self.epath + msg.Substring(3) else
+                tempPath := self.epath + SLASH + msg.Substring(3);
+              Directory.GetDirectories(tempPath);
+              self.epath := tempPath;
+            except on e: Exception do 
+              responce := E_ERROR_OPEN_FOLDER + #13 + e.Message;
+            end; // try
+          end;
+        end; 
+        E_RECEIVE_FILE:
+          begin
+            var filePath := Strip(self.epath, #13+#10+' ') + SLASH + msg.Substring(3);
+            var FStream: FileStream;
+            
+            try
+              FStream := System.IO.File.OpenRead(filePath);
+            except on e: Exception do 
+              begin
+                Println(e.Message);
+                exit(E_ERROR_OPEN_FILE + ': ' + e.Message);
+              end;
             end;
-          end; 
-          E_RECEIVE_FILE:
-            begin
-              var filePath := Strip(self.epath, #13+#10+' ') + SLASH + msg.Substring(3);
-              var FStream: FileStream := System.IO.File.OpenRead(filePath);
-              
-              // Получение размера файла
-              var fileSize := FStream.Length;
-              var sizeBuffer := System.BitConverter.GetBytes(fileSize); // 8 байт Int64
-              
-              // Отправка 8 байт с размером файла
-              stream.Write(sizeBuffer, 0, sizeBuffer.Length);
-              
-              // Отправка файла по частям
-              var buffer := new byte[4096];
-              var bytesRead := 0;
-              
-              repeat
-                bytesRead := FStream.Read(buffer, 0, buffer.Length);
-                if bytesRead > 0 then
-                  stream.Write(buffer, 0, bytesRead);
-              until bytesRead = 0;
-              
-              FStream.Close();
-              
-              responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
-            end;    
-        
-        end; // case
-      finally
-        Result := responce;
-      end; 
+            
+            // Получение размера файла
+            var fileSize := FStream.Length;
+            var sizeBuffer := System.BitConverter.GetBytes(fileSize); // 8 байт Int64
+            
+            // Отправка 8 байт с размером файла
+            stream.Write(sizeBuffer, 0, sizeBuffer.Length);
+            
+            // Отправка файла по частям
+            var buffer := new byte[4096];
+            var bytesRead := 0;
+            
+            repeat
+              bytesRead := FStream.Read(buffer, 0, buffer.Length);
+              if bytesRead > 0 then
+                stream.Write(buffer, 0, bytesRead);
+            until bytesRead = 0;
+            
+            FStream.Close();
+            
+            responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
+          end;    
+      
+      end; // case
+
+      Result := responce;
     end;    
   
   

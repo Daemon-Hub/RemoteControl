@@ -23,6 +23,7 @@ const
   E_FILE_SUCCESSFULLY_TRANSFERRED = 'E@8';
   
   //  ERROR CODES  //
+  E_ERROR_OPEN_FILE = 'R@20';
   E_ERROR_OPEN_FOLDER = 'R@21';
 
 procedure InitWinIcons();
@@ -46,11 +47,8 @@ type
     end;
   end;
 
-
 var
   WinIcons: Dictionary<string, System.Drawing.Image>;
-
-
 
 
 implementation

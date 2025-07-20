@@ -29,18 +29,18 @@ type
       var screenBounds := Screen.PrimaryScreen.WorkingArea;
       self.Location := new Point(screenBounds.Width - self.Width - 10, screenBounds.Height - self.Height - 10);
       
-      self.MessageText.Text := #13+'         '+msg;
+      self.MessageText.Text := msg;
       
       // Закруглённые углы
-//      var rectangle := new Rectangle(0, 0, Self.Width, Self.Height);
-//      var radius := 20;
-//      var graphicsPath := new System.Drawing.Drawing2D.GraphicsPath();
-//          graphicsPath.AddArc(rectangle.X, rectangle.Y, radius * 2, radius * 2, 180, 90);
-//          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Y, radius * 2, radius * 2, 270, 90);
-//          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Height - radius * 2, radius * 2, radius * 2, 0, 90);
-//          graphicsPath.AddArc(rectangle.X, rectangle.Height - radius * 2, radius * 2, radius * 2, 90, 90);
-//          graphicsPath.CloseFigure();
-//      Self.Region := new System.Drawing.Region(graphicsPath);
+      var rectangle := new Rectangle(0, 0, Self.Width, Self.Height);
+      var radius := 10;
+      var graphicsPath := new System.Drawing.Drawing2D.GraphicsPath();
+          graphicsPath.AddArc(rectangle.X, rectangle.Y, radius * 2, radius * 2, 180, 90);
+          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Y, radius * 2, radius * 2, 270, 90);
+          graphicsPath.AddArc(rectangle.Width - radius * 2, rectangle.Height - radius * 2, radius * 2, radius * 2, 0, 90);
+          graphicsPath.AddArc(rectangle.X, rectangle.Height - radius * 2, radius * 2, radius * 2, 90, 90);
+          graphicsPath.CloseFigure();
+      Self.Region := new System.Drawing.Region(graphicsPath);
       
       self.FormShowAnimation.Start();
       self.Show();
@@ -59,9 +59,9 @@ begin
   var rect := Self.ClientRectangle;
   var gradientBrush := new System.Drawing.Drawing2D.LinearGradientBrush(
   rect,
-  Color.FromArgb(0, 128, 0),
-  Color.FromArgb(144, 238, 144),
-  System.Drawing.Drawing2D.LinearGradientMode.Vertical);
+  Color.FromArgb(171, 171, 171),
+  Color.FromArgb(153, 180, 209),
+  System.Drawing.Drawing2D.LinearGradientMode.BackwardDiagonal);
   g.FillRectangle(gradientBrush, rect);
 end;
 

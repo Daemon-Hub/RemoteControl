@@ -9,14 +9,14 @@ procedure InitializeComponent;
         // 
         // MessageText
         // 
-        self.MessageText.AutoSize := true;
         self.MessageText.BackColor := System.Drawing.Color.Transparent;
         self.MessageText.Dock := System.Windows.Forms.DockStyle.Fill;
         self.MessageText.Font := new System.Drawing.Font('Microsoft Sans Serif', 9.75, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
         self.MessageText.Location := new System.Drawing.Point(0, 0);
-        self.MessageText.MaximumSize := new System.Drawing.Size(250, 60);
+        self.MessageText.MaximumSize := new System.Drawing.Size(300, 100);
+        self.MessageText.MinimumSize := new System.Drawing.Size(300, 100);
         self.MessageText.Name := 'MessageText';
-        self.MessageText.Size := new System.Drawing.Size(7, 16);
+        self.MessageText.Size := new System.Drawing.Size(300, 100);
         self.MessageText.TabIndex := 0;
         self.MessageText.Text := #13#10;
         self.MessageText.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
@@ -38,7 +38,7 @@ procedure InitializeComponent;
         // 
         // Notification
         // 
-        self.ClientSize := new System.Drawing.Size(250, 60);
+        self.ClientSize := new System.Drawing.Size(300, 100);
         self.Controls.Add(self.MessageText);
         self.FormBorderStyle := System.Windows.Forms.FormBorderStyle.None;
         self.Name := 'Notification';
@@ -48,5 +48,4 @@ procedure InitializeComponent;
         self.FormClosing += Notification_FormClosing;
         self.Paint += Notification_Paint;
         self.ResumeLayout(false);
-        self.PerformLayout();
     end;

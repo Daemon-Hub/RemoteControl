@@ -293,10 +293,19 @@ type
       
       stream.Write(buffer, 0, buffer.Length);
       
-      // Получение размера файла (8 байт)
-      var sizeBuffer := new byte[8];
-      stream.Read(sizeBuffer, 0, 8); 
-      var fileSize := System.BitConverter.ToInt64(sizeBuffer, 0);
+      // Получение размера файла
+      SetLength(buffer, self.selectedClient.client.ReceiveBufferSize);
+      stream.Read(Buffer, 0, buffer.Length);
+      
+      message := Encoding.UTF8.GetString(Buffer);
+      
+      if message.StartsWith('R@') then begin
+        ErrorHundler(message);
+        self.messageSending := false;
+        exit(false);
+      end;
+        
+      var fileSize := System.BitConverter.ToInt64(Buffer, 0);
       
       var receivedBytes := 0;
       var readBytes := 0;
@@ -325,12 +334,6 @@ type
         System.IO.File.Delete(savePath);
         
       self.messageSending := false;
-    end;
-    
-    
-    procedure SelectFirstClient();
-    begin
-      self.selectedClient := self.head;
     end;
   
   end;// class

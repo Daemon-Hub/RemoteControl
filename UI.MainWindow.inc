@@ -10,6 +10,7 @@ procedure InitializeComponent;
         self.clientConnectButton := new System.Windows.Forms.Button();
         self.ServerTab := new System.Windows.Forms.TabPage();
         self.splitContainer1 := new System.Windows.Forms.SplitContainer();
+        self.OpenListOfConnectedDevices := new System.Windows.Forms.Button();
         self.ServerIPAddr := new System.Windows.Forms.TextBox();
         self.CountOfClientsLabel := new System.Windows.Forms.Label();
         self.ServerStartedInfo := new System.Windows.Forms.Label();
@@ -37,7 +38,8 @@ procedure InitializeComponent;
         self.__cut := new System.Windows.Forms.ToolStripMenuItem();
         self.__rename := new System.Windows.Forms.ToolStripMenuItem();
         self.__receive_file := new System.Windows.Forms.ToolStripMenuItem();
-        self.OpenListOfConnectedDevices := new System.Windows.Forms.Button();
+        self.ExplorerItemsUpdateButton := new System.Windows.Forms.ToolStripButton();
+        self.__delete := new System.Windows.Forms.ToolStripMenuItem();
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -99,11 +101,12 @@ procedure InitializeComponent;
         // clientConnectState
         // 
         self.clientConnectState.AutoSize := true;
-        self.clientConnectState.Font := new System.Drawing.Font('Microsoft Sans Serif', 12, (System.Drawing.FontStyle((System.Drawing.FontStyle.Bold or System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.clientConnectState.BackColor := System.Drawing.Color.Transparent;
+        self.clientConnectState.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
         self.clientConnectState.ForeColor := System.Drawing.SystemColors.ControlText;
         self.clientConnectState.Location := new System.Drawing.Point(512, 13);
         self.clientConnectState.Name := 'clientConnectState';
-        self.clientConnectState.Size := new System.Drawing.Size(129, 24);
+        self.clientConnectState.Size := new System.Drawing.Size(121, 22);
         self.clientConnectState.TabIndex := 2;
         self.clientConnectState.Text := 'Не подключено';
         self.clientConnectState.UseCompatibleTextRendering := true;
@@ -121,14 +124,15 @@ procedure InitializeComponent;
         // clientConnectButton
         // 
         self.clientConnectButton.AutoSize := true;
-        self.clientConnectButton.Font := new System.Drawing.Font('Microsoft Sans Serif', 12, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.clientConnectButton.BackColor := System.Drawing.SystemColors.AppWorkspace;
+        self.clientConnectButton.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold);
         self.clientConnectButton.Location := new System.Drawing.Point(6, 6);
         self.clientConnectButton.Name := 'clientConnectButton';
         self.clientConnectButton.Size := new System.Drawing.Size(232, 35);
         self.clientConnectButton.TabIndex := 0;
         self.clientConnectButton.Text := 'Подключиться к серверу';
         self.clientConnectButton.UseCompatibleTextRendering := true;
-        self.clientConnectButton.UseVisualStyleBackColor := true;
+        self.clientConnectButton.UseVisualStyleBackColor := false;
         self.clientConnectButton.Click += ClientConnectButton_Click;
         // 
         // ServerTab
@@ -168,6 +172,21 @@ procedure InitializeComponent;
         self.splitContainer1.SplitterDistance := 217;
         self.splitContainer1.TabIndex := 4;
         // 
+        // OpenListOfConnectedDevices
+        // 
+        self.OpenListOfConnectedDevices.Anchor := (System.Windows.Forms.AnchorStyles((System.Windows.Forms.AnchorStyles.Top or System.Windows.Forms.AnchorStyles.Right)));
+        self.OpenListOfConnectedDevices.BackColor := System.Drawing.SystemColors.AppWorkspace;
+        self.OpenListOfConnectedDevices.Enabled := false;
+        self.OpenListOfConnectedDevices.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.OpenListOfConnectedDevices.ForeColor := System.Drawing.SystemColors.Desktop;
+        self.OpenListOfConnectedDevices.Location := new System.Drawing.Point(522, 3);
+        self.OpenListOfConnectedDevices.Name := 'OpenListOfConnectedDevices';
+        self.OpenListOfConnectedDevices.Size := new System.Drawing.Size(319, 47);
+        self.OpenListOfConnectedDevices.TabIndex := 5;
+        self.OpenListOfConnectedDevices.Text := 'Открыть список подключённых устройств';
+        self.OpenListOfConnectedDevices.UseVisualStyleBackColor := false;
+        self.OpenListOfConnectedDevices.Click += OpenListOfConnectedDevices_Click;
+        // 
         // ServerIPAddr
         // 
         self.ServerIPAddr.Location := new System.Drawing.Point(9, 63);
@@ -178,11 +197,12 @@ procedure InitializeComponent;
         // 
         // CountOfClientsLabel
         // 
+        self.CountOfClientsLabel.Anchor := (System.Windows.Forms.AnchorStyles((System.Windows.Forms.AnchorStyles.Top or System.Windows.Forms.AnchorStyles.Right)));
         self.CountOfClientsLabel.AutoSize := true;
-        self.CountOfClientsLabel.Font := new System.Drawing.Font('Microsoft Sans Serif', 12, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
-        self.CountOfClientsLabel.Location := new System.Drawing.Point(568, 39);
+        self.CountOfClientsLabel.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold);
+        self.CountOfClientsLabel.Location := new System.Drawing.Point(567, 53);
         self.CountOfClientsLabel.Name := 'CountOfClientsLabel';
-        self.CountOfClientsLabel.Size := new System.Drawing.Size(229, 24);
+        self.CountOfClientsLabel.Size := new System.Drawing.Size(215, 22);
         self.CountOfClientsLabel.TabIndex := 2;
         self.CountOfClientsLabel.Text := 'Подключённых устройств: 0';
         self.CountOfClientsLabel.UseCompatibleTextRendering := true;
@@ -191,10 +211,10 @@ procedure InitializeComponent;
         // 
         self.ServerStartedInfo.AutoEllipsis := true;
         self.ServerStartedInfo.AutoSize := true;
-        self.ServerStartedInfo.Font := new System.Drawing.Font('Microsoft Sans Serif', 12, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.ServerStartedInfo.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold);
         self.ServerStartedInfo.Location := new System.Drawing.Point(182, 3);
         self.ServerStartedInfo.Name := 'ServerStartedInfo';
-        self.ServerStartedInfo.Size := new System.Drawing.Size(221, 24);
+        self.ServerStartedInfo.Size := new System.Drawing.Size(207, 22);
         self.ServerStartedInfo.TabIndex := 1;
         self.ServerStartedInfo.Text := 'Сервер успешно запущен'#13#10;
         self.ServerStartedInfo.UseCompatibleTextRendering := true;
@@ -203,14 +223,14 @@ procedure InitializeComponent;
         // ServerCreateButton
         // 
         self.ServerCreateButton.AutoSize := true;
-        self.ServerCreateButton.Font := new System.Drawing.Font('Microsoft Sans Serif', 12, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.ServerCreateButton.BackColor := System.Drawing.SystemColors.AppWorkspace;
+        self.ServerCreateButton.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold);
         self.ServerCreateButton.Location := new System.Drawing.Point(4, 3);
         self.ServerCreateButton.Name := 'ServerCreateButton';
         self.ServerCreateButton.Size := new System.Drawing.Size(172, 39);
         self.ServerCreateButton.TabIndex := 0;
         self.ServerCreateButton.Text := 'Запустить сервер';
-        self.ServerCreateButton.UseCompatibleTextRendering := true;
-        self.ServerCreateButton.UseVisualStyleBackColor := true;
+        self.ServerCreateButton.UseVisualStyleBackColor := false;
         self.ServerCreateButton.Click += ServerCreate_Click;
         // 
         // ClientControlTab
@@ -274,6 +294,7 @@ procedure InitializeComponent;
         // ExplorerTab
         // 
         self.ExplorerTab.AutoScroll := true;
+        self.ExplorerTab.BackColor := System.Drawing.SystemColors.ScrollBar;
         self.ExplorerTab.BackgroundImageLayout := System.Windows.Forms.ImageLayout.Center;
         self.ExplorerTab.BorderStyle := System.Windows.Forms.BorderStyle.Fixed3D;
         self.ExplorerTab.ContextMenuStrip := self.ExplorerTabContextMenu;
@@ -286,14 +307,13 @@ procedure InitializeComponent;
         self.ExplorerTab.Size := new System.Drawing.Size(836, 174);
         self.ExplorerTab.TabIndex := 1;
         self.ExplorerTab.Text := 'Проводник';
-        self.ExplorerTab.UseVisualStyleBackColor := true;
         self.ExplorerTab.Resize += ExplorerTab_Resize;
         // 
         // ExplorerTabContextMenu
         // 
         self.ExplorerTabContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.__select_all, self.__update, self.__paste));
         self.ExplorerTabContextMenu.Name := 'contextMenuStrip2';
-        self.ExplorerTabContextMenu.Size := new System.Drawing.Size(194, 70);
+        self.ExplorerTabContextMenu.Size := new System.Drawing.Size(194, 92);
         // 
         // __select_all
         // 
@@ -325,7 +345,7 @@ procedure InitializeComponent;
         // ExplorerToolBar
         // 
         self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.InactiveCaption;
-        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[3](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.LabelPath));
+        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[4](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.LabelPath, self.ExplorerItemsUpdateButton));
         self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
         self.ExplorerToolBar.MaximumSize := new System.Drawing.Size(0, 25);
         self.ExplorerToolBar.Name := 'ExplorerToolBar';
@@ -360,7 +380,7 @@ procedure InitializeComponent;
         // 
         // splitContainer2
         // 
-        self.splitContainer2.BackColor := System.Drawing.SystemColors.Control;
+        self.splitContainer2.BackColor := System.Drawing.Color.Transparent;
         self.splitContainer2.Location := new System.Drawing.Point(282, 42);
         self.splitContainer2.Name := 'splitContainer2';
         self.splitContainer2.Orientation := System.Windows.Forms.Orientation.Horizontal;
@@ -379,7 +399,7 @@ procedure InitializeComponent;
         // 
         // label2
         // 
-        self.label2.BackColor := System.Drawing.SystemColors.Control;
+        self.label2.BackColor := System.Drawing.Color.Transparent;
         self.label2.Dock := System.Windows.Forms.DockStyle.Fill;
         self.label2.ImageKey := 'ini.png';
         self.label2.ImageList := self.FilesIconList;
@@ -462,9 +482,9 @@ procedure InitializeComponent;
         // 
         // ExplorerItemContextMenu
         // 
-        self.ExplorerItemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[4](self.__copy, self.__cut, self.__rename, self.__receive_file));
+        self.ExplorerItemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[5](self.__cut, self.__copy, self.__rename, self.__receive_file, self.__delete));
         self.ExplorerItemContextMenu.Name := 'contextMenuStrip2';
-        self.ExplorerItemContextMenu.Size := new System.Drawing.Size(191, 92);
+        self.ExplorerItemContextMenu.Size := new System.Drawing.Size(191, 114);
         // 
         // __copy
         // 
@@ -495,21 +515,29 @@ procedure InitializeComponent;
         self.__receive_file.Image := (System.Drawing.Image(resources.GetObject('__receive_file.Image')));
         self.__receive_file.MergeIndex := 0;
         self.__receive_file.Name := '__receive_file';
+        self.__receive_file.ShortcutKeys := (System.Windows.Forms.Keys((System.Windows.Forms.Keys.Control or System.Windows.Forms.Keys.R)));
         self.__receive_file.Size := new System.Drawing.Size(190, 22);
-        self.__receive_file.Text := 'Получить файл';
+        self.__receive_file.Text := 'Получить';
         self.__receive_file.Click += __receive_file_Click;
         // 
-        // OpenListOfConnectedDevices
+        // ExplorerItemsUpdateButton
         // 
-        self.OpenListOfConnectedDevices.BackColor := System.Drawing.SystemColors.Info;
-        self.OpenListOfConnectedDevices.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
-        self.OpenListOfConnectedDevices.Location := new System.Drawing.Point(522, 3);
-        self.OpenListOfConnectedDevices.Name := 'OpenListOfConnectedDevices';
-        self.OpenListOfConnectedDevices.Size := new System.Drawing.Size(319, 33);
-        self.OpenListOfConnectedDevices.TabIndex := 5;
-        self.OpenListOfConnectedDevices.Text := 'Открыть список подключённых устройств';
-        self.OpenListOfConnectedDevices.UseVisualStyleBackColor := false;
-        self.OpenListOfConnectedDevices.Click += OpenListOfConnectedDevices_Click;
+        self.ExplorerItemsUpdateButton.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerItemsUpdateButton.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.ExplorerItemsUpdateButton.Image := (System.Drawing.Image(resources.GetObject('ExplorerItemsUpdateButton.Image')));
+        self.ExplorerItemsUpdateButton.ImageTransparentColor := System.Drawing.Color.Magenta;
+        self.ExplorerItemsUpdateButton.Name := 'ExplorerItemsUpdateButton';
+        self.ExplorerItemsUpdateButton.Size := new System.Drawing.Size(23, 22);
+        self.ExplorerItemsUpdateButton.ToolTipText := 'Обновить';
+        self.ExplorerItemsUpdateButton.MouseDown += __update_MouseDown;
+        // 
+        // __delete
+        // 
+        self.__delete.Image := (System.Drawing.Image(resources.GetObject('__delete.Image')));
+        self.__delete.Name := '__delete';
+        self.__delete.ShortcutKeys := System.Windows.Forms.Keys.Delete;
+        self.__delete.Size := new System.Drawing.Size(190, 22);
+        self.__delete.Text := 'Удалить';
         // 
         // MainWindow
         // 

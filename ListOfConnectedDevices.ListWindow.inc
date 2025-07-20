@@ -2,9 +2,9 @@ procedure InitializeComponent;
     begin
         var resources: System.ComponentModel.ComponentResourceManager := new System.ComponentModel.ComponentResourceManager(typeof(ListWindow));
         self.ConnectedDevice := new System.Windows.Forms.SplitContainer();
-        self.StateButton := new System.Windows.Forms.RadioButton();
         self.DeviceIcon := new System.Windows.Forms.Label();
         self.Info := new System.Windows.Forms.Label();
+        self.StateButton := new System.Windows.Forms.CheckBox();
         (System.ComponentModel.ISupportInitialize(self.ConnectedDevice)).BeginInit();
         self.ConnectedDevice.Panel1.SuspendLayout();
         self.ConnectedDevice.Panel2.SuspendLayout();
@@ -34,22 +34,6 @@ procedure InitializeComponent;
         self.ConnectedDevice.SplitterDistance := 111;
         self.ConnectedDevice.TabIndex := 2;
         // 
-        // StateButton
-        // 
-        self.StateButton.CheckAlign := System.Drawing.ContentAlignment.MiddleCenter;
-        self.StateButton.Checked := true;
-        self.StateButton.Cursor := System.Windows.Forms.Cursors.Hand;
-        self.StateButton.Dock := System.Windows.Forms.DockStyle.Top;
-        self.StateButton.Location := new System.Drawing.Point(0, 0);
-        self.StateButton.MaximumSize := new System.Drawing.Size(14, 14);
-        self.StateButton.MinimumSize := new System.Drawing.Size(14, 14);
-        self.StateButton.Name := 'StateButton';
-        self.StateButton.Size := new System.Drawing.Size(14, 14);
-        self.StateButton.TabIndex := 4;
-        self.StateButton.TabStop := true;
-        self.StateButton.TextAlign := System.Drawing.ContentAlignment.TopCenter;
-        self.StateButton.UseVisualStyleBackColor := true;
-        // 
         // DeviceIcon
         // 
         self.DeviceIcon.BackColor := System.Drawing.SystemColors.Control;
@@ -76,6 +60,16 @@ procedure InitializeComponent;
         self.Info.Text := '123';
         self.Info.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
         self.Info.UseCompatibleTextRendering := true;
+        // 
+        // StateButton
+        // 
+        self.StateButton.Location := new System.Drawing.Point(0, 0);
+        self.StateButton.MaximumSize := new System.Drawing.Size(13, 13);
+        self.StateButton.MinimumSize := new System.Drawing.Size(13, 13);
+        self.StateButton.Name := 'StateButton';
+        self.StateButton.Size := new System.Drawing.Size(13, 13);
+        self.StateButton.TabIndex := 3;
+        self.StateButton.UseVisualStyleBackColor := true;
         // 
         // ListWindow
         // 

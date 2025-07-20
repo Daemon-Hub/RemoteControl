@@ -12,7 +12,8 @@ uses
   Notifications, 
   ListOfConnectedDevices;
 
-type ApplicationState = (SERVER, CLIENT);
+type
+  ApplicationState = (SERVER, CLIENT);
 
 var
   _server: TcpServer;
@@ -21,7 +22,7 @@ var
   _server_service: Thread;
   
   _client: TClient;
-
+  
   AppState: ApplicationState;
 
 type
@@ -44,6 +45,7 @@ type
     procedure __select_all_Click(sender: Object; e: EventArgs);
     procedure __receive_file_Click(sender: Object; e: EventArgs);
     procedure OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
+    procedure UpdateSelectedDevice(NewDevice: TClient);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -83,6 +85,8 @@ type
     __receive_file: ToolStripMenuItem;
     ServerIPAddr: TextBox;
     OpenListOfConnectedDevices: Button;
+    ExplorerItemsUpdateButton: ToolStripButton;
+    __delete: ToolStripMenuItem;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
@@ -99,7 +103,7 @@ type
 implementation
 
 
-procedure MainWindow.Form1_Load(sender: Object; e: EventArgs); begin end;
+procedure MainWindow.Form1_Load(sender: Object; e: EventArgs);begin end;
 
 
 procedure MainWindow.MainWindow_FormClosing(sender: Object; e: FormClosingEventArgs);
@@ -155,9 +159,9 @@ begin
     
     try
       _server_service.Start();
-    except 
+    except
       _server_service.Resume();
-      
+    
     end;
     
   end;
@@ -182,26 +186,24 @@ begin
     
     Thread.Create(
       () -> begin
-        self.Invoke( 
+      self.Invoke( 
           procedure () -> begin
-            ClientIPMask.Enabled := false;
-            while (_client.client = nil) and (_client.retry < 5) do
-              clientConnectingProgress.Increment(_client.retry - clientConnectingProgress.Value);
-            
-            clientConnectingProgress.Increment(5);
-            clientConnectState.Text := _client.ConnectedMsg();
-            if _client.client = nil then begin
-              ClientIPMask.Enabled := true;
-              _client := nil;
-            end else begin
-              clientConnectButton.Text := 'Отключиться';
-              AppState := ApplicationState.CLIENT;
-              Thread.Create(procedure () -> ClientConnectionStateMonitoring).Start();
-            end;
-          end
-        );
-      end
-    ).Start();
+        ClientIPMask.Enabled := false;
+        while (_client.client = nil) and (_client.retry < 5) do
+          clientConnectingProgress.Increment(_client.retry - clientConnectingProgress.Value);
+        
+        clientConnectingProgress.Increment(5);
+        clientConnectState.Text := _client.ConnectedMsg();
+        if _client.client = nil then begin
+          ClientIPMask.Enabled := true;
+          _client := nil;
+        end else begin
+          clientConnectButton.Text := 'Отключиться';
+          AppState := ApplicationState.CLIENT;
+          Thread.Create(procedure () -> ClientConnectionStateMonitoring).Start();
+        end;
+      end);
+    end).Start();
   end
   else begin
     ClientIPMask.Enabled := true;
@@ -220,7 +222,7 @@ end;
 
 procedure MainWindow.ClientConnectionStateMonitoring();
 begin
-
+  
   while _client.AppIsRunning do
     Thread.Sleep(1000);
   
@@ -246,65 +248,56 @@ end;
 
 procedure MainWindow.ServerConnectionService();
 begin
-  while _server_is_working do begin
+  while _server_is_working do
+  begin
     if _server.CountOfClients <> _server_count_of_clients then begin
-            
+      
       // Используем Invoke для безопасного доступа к UI-элементам
       self.Invoke(
         procedure () -> begin
-          if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then begin
-            Thread.Sleep(100);
-            
-            _server.SelectFirstClient();
-            ErrorHundler($'{_server.selectedClient.WinInfo.ComputerName} подключился{#13}IP:{_server.selectedClient.ip}');
-            
-            ClientControlTab.Enabled := true;
-            
-            var path: string = _server.MessageHandler(GETPATH);
-            
-            // Console
-            consoleBox.AppendText(path+'>');
-            
-            consoleBox.SelectionStart := consoleBox.Text.Length;
-            
-            // Explorer
-            self.LabelPath.Text := path;
-            explorer.init(self.ExplorerTab, 
+        if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then begin
+          Thread.Sleep(100);
+          
+          self.ClientControlTab.Enabled := true;
+          self.OpenListOfConnectedDevices.Enabled := true;  
+          
+          explorer.init(self.ExplorerTab, 
                           self.FilesIconList, 
                           self.ExplorerToolBar, 
                           self.ExplorerDirectory_DoubleClick,
                           self.ExplorerItemContextMenu);
-                          
-            explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                            _server.MessageHandler(E_GET_FILES));
-            
-          end 
-          else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then begin
-            cls();
-            ClientControlTab.Enabled := false;
-            _server.selectedClient := nil;
-          end;
-         
-        end
-      );
+          
+          self.UpdateSelectedDevice(_server.head);
+          
+          ErrorHundler($'{_server.selectedClient.WinInfo.ComputerName} подключился{#13}IP:{_server.selectedClient.ip}'); 
+        end 
+        else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then begin
+          cls();
+          self.ClientControlTab.Enabled := false;
+          self.OpenListOfConnectedDevices.Enabled := false; 
+          _server.selectedClient := nil;
+        end;
+        
+      end);
       _server_count_of_clients := _server.CountOfClients;
       self.UpdateCountOfClientsLabel();
       
     end;
   end; // while
-
+  
 end;
 
 
-procedure MainWindow.UpdateCountOfClientsLabel := CountOfClientsLabel.Text := 
-                                       CountOfClientsLabel.Text.Substring(0, 
-                                       CountOfClientsLabel.Text.IndexOf(':')+1) +
-                                       _server_count_of_clients.ToString;
+procedure MainWindow.UpdateCountOfClientsLabel :=
+                     CountOfClientsLabel.Text := 
+                     CountOfClientsLabel.Text.Substring(0, 
+                     CountOfClientsLabel.Text.IndexOf(':') + 1) +
+                     _server_count_of_clients.ToString;
 
 /// Очищает консольное окно
 procedure MainWindow.cls(_t: string) := ConsoleBox.Text := _t;
- 
- 
+
+
 procedure MainWindow.ConsoleBox_KeyDown(sender: Object; e: KeyEventArgs);
 begin
   {$region Options}
@@ -318,7 +311,7 @@ begin
   
   if e.KeyCode = Keys.Home then begin
     e.Handled := true;
-    ConsoleBox.SelectionStart := pos+1;
+    ConsoleBox.SelectionStart := pos + 1;
     exit;
   end;
   
@@ -327,35 +320,35 @@ begin
     ConsoleBox.SelectionStart := ConsoleBox.Text.Length;
     exit;
   end;
-
+  
   // Нельзя переступать стрелкой влево знак >
-  if (e.KeyCode = Keys.Left) and (ConsoleBox.SelectionStart = pos+1) then begin
+  if (e.KeyCode = Keys.Left) and (ConsoleBox.SelectionStart = pos + 1) then begin
     e.Handled := true;
     ConsoleBox.SelectionStart := pos + 1;
     exit;
   end;
   
   // Backspace можно использовать только когда курсор стоит после знака >
-  if (e.KeyCode = Keys.Back) and (not(ConsoleBox.SelectionStart > pos+1)) then begin
+  if (e.KeyCode = Keys.Back) and (not (ConsoleBox.SelectionStart > pos + 1)) then begin
     e.Handled := true;
     e.SuppressKeyPress := true;
     exit;
   end;
   
   // Запрещаем редактирование предыдущего текста
-  if ConsoleBox.SelectionStart < pos+1 then begin
+  if ConsoleBox.SelectionStart < pos + 1 then begin
     e.Handled := true;
     e.SuppressKeyPress := true;
     exit;
   end;
-    
+  
   {$endregion Options}
   // -------------------------- Enter Pressed -------------------------- //
   
   if e.KeyCode <> Keys.Enter then exit;
   
   e.SuppressKeyPress := true; // Отключаем звук Enter
-    
+  
   var command := consoleBox.Lines[consoleBox.Lines.Length-1][2:];
   
   if command in ['cls', 'clear'] then begin
@@ -364,12 +357,12 @@ begin
   end;
   
   var msg: string = '';
-  if not(command in AllDelimiters) then 
+  if not (command in AllDelimiters) then 
     msg := _server.MessageHandler(command);
   
   if 'cd' in command then
     consoleBox.AppendText(#13#10 + _server.MessageHandler(GETPATH) + '>') else
-  consoleBox.AppendText(#13#10 + msg + #13#10 + _server.MessageHandler(GETPATH) + '>');
+    consoleBox.AppendText(#13#10 + msg + #13#10 + _server.MessageHandler(GETPATH) + '>');
   
   // Автопрокрутка вниз
   consoleBox.SelectionStart := consoleBox.Text.Length;
@@ -385,15 +378,14 @@ begin
       Clipboard.SetText(Copy(ConsoleBox.Text, ConsoleBox.SelectionStart, ConsoleBox.SelectionLength)) else
     if Clipboard.ContainsText() then
       ConsoleBox.Text += Clipboard.GetText();
-  consoleBox.SelectionStart := consoleBox.Text.Length;
-  consoleBox.ScrollToCaret();
+    consoleBox.SelectionStart := consoleBox.Text.Length;
+    consoleBox.ScrollToCaret();
   end;
 end;
 
 
-procedure MainWindow.ExplorerTab_Resize(
-          sender: Object; e: EventArgs) := 
-          explorer.Update(is_not_new_dir := true);
+procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs) := 
+explorer.Update(is_not_new_dir := true);
 
 
 procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
@@ -409,8 +401,8 @@ begin
   var container := explorer.GetSplitContainer(sender);
   var folder_name: string = container.Panel2.Controls[0].Text;
   
-  var response: string = _server.MessageHandler(E_ENTER_FOLDER+folder_name);
-  
+  var response: string = _server.MessageHandler(E_ENTER_FOLDER + folder_name);
+  Println(response);
   if response.StartsWith('R@') then 
     ErrorHundler(response) 
   else begin
@@ -422,13 +414,13 @@ end;
 
 
 procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs) :=
-  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+explorer.Update(_server.MessageHandler(E_GET_DIRS),
                   _server.MessageHandler(E_GET_FILES));
 
 
 procedure MainWindow.__select_all_Click(sender: Object; e: EventArgs);
 begin
-  for var id := 0 to ExplorerTab.Controls.Count-1 do
+  for var id := 0 to ExplorerTab.Controls.Count - 1 do
     if ExplorerTab.Controls[id] is SplitContainer then begin
       ExplorerTab.Controls[id].BackColor := explorer.selected_color;
       selected_items.Add(ExplorerTab.Controls[id] as SplitContainer);
@@ -444,27 +436,46 @@ begin
   end;
   var fileName := explorer.selected_items[0].Panel2.Controls[0].Text;
   var saveDialog := new SaveFileDialog();
-      saveDialog.Filter := 'All files (*.*)|*.*|Text files (*.txt)|*.txt';
-      saveDialog.Title := 'Сохранить файл как...';
-      saveDialog.FileName := fileName;
-      saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+  saveDialog.Filter := 'All files (*.*)|*.*|Text files (*.txt)|*.txt';
+  saveDialog.Title := 'Сохранить файл как...';
+  saveDialog.FileName := fileName;
+  saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
   
   if saveDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK then
   begin
     var savePath := saveDialog.FileName;
     
     if _server.ReceiveFile(fileName, savePath) then
-      MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk) else 
-      MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error)
+      MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk); 
+      //MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error)
   end else
-      MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+    MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 end;
 
 
 procedure MainWindow.OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
 begin
-  new ListWindow(_server);
+  new ListWindow(_server, self.UpdateSelectedDevice);
 end;
 
+
+procedure MainWindow.UpdateSelectedDevice(NewDevice: TClient);
+begin
+  _server.selectedClient := NewDevice;
+  
+  var path: string = _server.MessageHandler(GETPATH);
+  
+  // Console
+  self.ConsoleBox.Text := '';
+  self.consoleBox.AppendText(path + '>');
+  self.consoleBox.SelectionStart := self.consoleBox.Text.Length;
+  
+  // Explorer
+  self.LabelPath.Text := path;
+  
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                _server.MessageHandler(E_GET_FILES));
+
+end;
 
 end.
