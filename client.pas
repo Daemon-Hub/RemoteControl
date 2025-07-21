@@ -184,7 +184,7 @@ type
     begin
       var responce: string = msg;
       
-      case msg.Substring(0, 3) of
+      case msg[:5] of
         E_GET_PATH: 
           responce := self.epath;
         E_GET_DIRS: 
@@ -202,12 +202,12 @@ type
           end;
         E_ENTER_FOLDER:
         begin
-          if Directory.EnumerateDirectories(self.epath, msg.Substring(3), SearchOption.TopDirectoryOnly).Count() > 0 then begin
+          if Directory.EnumerateDirectories(self.epath, msg.Substring(4), SearchOption.TopDirectoryOnly).Count() > 0 then begin
             try 
               var tempPath: string;
               if self.epath.LastIndexOf(SLASH)+1 = self.epath.Length then
-                tempPath := self.epath + msg.Substring(3) else
-                tempPath := self.epath + SLASH + msg.Substring(3);
+                tempPath := self.epath + msg.Substring(4) else
+                tempPath := self.epath + SLASH + msg.Substring(4);
               Directory.GetDirectories(tempPath);
               self.epath := tempPath;
             except on e: Exception do 
@@ -215,9 +215,9 @@ type
             end; // try
           end;
         end; 
-        E_RECEIVE_FILE:
+        E_RECEIVE_FILE: {$region Передача файла}
           begin
-            var filePath := Strip(self.epath, #13+#10+' ') + SLASH + msg.Substring(3);
+            var filePath := Strip(self.epath, #13+#10+' ') + SLASH + msg.Substring(4);
             var FStream: FileStream;
             
             try
@@ -249,13 +249,70 @@ type
             FStream.Close();
             
             responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
-          end;    
+          end;{$endregion}    
+        E_PASTE_ITEM:
+          begin
+            var info: PasteInformation = JsonConvert.DeserializeObject&<PasteInformation>(msg.Substring(4));
+            Println(msg.Substring(4));
+            if info.Code = E_CUT_ITEM then begin
+              foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
+                if Directory.Exists(info.TakeFrom(item)) then 
+                  cmd.MOVE(info.TakeFrom(item), info.PasteHere(item))
+                else if System.IO.File.Exists(info.TakeFrom(item)) then
+                  System.IO.File.Move(info.TakeFrom(item), info.PasteHere(item)) 
+                else begin
+                    Println('Скип', item, info.TakeFrom(item),'->', info.PasteHere(item));
+                    Println(info.SourcePath, info.DestinationPath)
+                 end;
+              end;
+              responce := 'Перемещение прошло успешно';
+            end else begin
+              foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
+                if Directory.Exists(info.TakeFrom(item)) then
+                  self.CopyDirectory(info.TakeFrom(item), info.PasteHere(item))
+                else
+                  System.IO.File.Copy(info.TakeFrom(item), info.PasteHere(item), true);
+              end;
+              responce := 'Копирование прошло успешно';
+            end;
+          end;
+        E_DELETE_ITEM:
+          begin
+            var items_path: string = msg.Substring(4, msg.IndexOf('[')-4) + SLASH;
+            var JsonObjectStr := msg.Substring(msg.IndexOf('['));
+            var items := JsonConvert.DeserializeObject&<array of string>(JsonObjectStr);
+            foreach var item in items do
+              if Directory.Exists(items_path+item) then
+                cmd.RMDIR(items_path+item) else
+                System.IO.File.Delete(items_path+item);
+            responce := 'Удаление прошло успешно';
+          end;
       
       end; // case
 
       Result := responce;
     end;    
   
+    public procedure CopyDirectory(sourceDir, destDir: string);
+    begin
+      // Создаём целевую директорию, если она не существует
+      if not Directory.Exists(destDir) then
+        Directory.CreateDirectory(destDir);
+    
+      // Копируем все файлы из sourceDir
+      foreach var fileName in Directory.GetFiles(sourceDir) do
+      begin
+        var destFile := System.IO.Path.Combine(destDir, System.IO.Path.GetFileName(fileName));
+        System.IO.File.Copy(fileName, destFile, true);
+      end;
+    
+      // Рекурсивно копируем поддиректории
+      foreach var dirName in Directory.GetDirectories(sourceDir) do
+      begin
+        var destSubDir := System.IO.Path.Combine(destDir, System.IO.Path.GetFileName(dirName));
+        CopyDirectory(dirName, destSubDir);
+      end;
+    end;
   
     public function GetWinInfo(): string := JsonConvert.SerializeObject(self.WinInfo);
   

@@ -10,7 +10,8 @@ uses
   System.Windows.Forms,  
   explorer, server, client, types,
   Notifications, 
-  ListOfConnectedDevices;
+  ListOfConnectedDevices,
+  Newtonsoft.Json;
 
 type
   ApplicationState = (SERVER, CLIENT);
@@ -39,6 +40,7 @@ type
     procedure UpdateCountOfClientsLabel();
     procedure cls(_t: string := '');
     procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
+    procedure ExplorerTab_MouseDown(sender: Object; e: MouseEventArgs);
     procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
     procedure ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
     procedure __update_MouseDown(sender: Object; e: MouseEventArgs);
@@ -46,6 +48,10 @@ type
     procedure __receive_file_Click(sender: Object; e: EventArgs);
     procedure OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
     procedure UpdateSelectedDevice(NewDevice: TClient);
+    procedure __cut_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure __copy_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure __paste_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure __delete_MouseDown(sender: Object; e: MouseEventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -73,7 +79,7 @@ type
     ExplorerToolBar: ToolStrip;
     ExplorerToolBarButtonUp: ToolStripButton;
     toolStripSeparator1: ToolStripSeparator;
-    LabelPath: ToolStripLabel;
+    ExplorerPathLabel: ToolStripLabel;
     ExplorerTabContextMenu: System.Windows.Forms.ContextMenuStrip;
     __paste: ToolStripMenuItem;
     __update: ToolStripMenuItem;
@@ -83,10 +89,13 @@ type
     __cut: ToolStripMenuItem;
     __rename: ToolStripMenuItem;
     __receive_file: ToolStripMenuItem;
-    ServerIPAddr: TextBox;
     OpenListOfConnectedDevices: Button;
     ExplorerItemsUpdateButton: ToolStripButton;
     __delete: ToolStripMenuItem;
+    toolStripSeparator2: ToolStripSeparator;
+    SelectAllItems: ToolStripButton;
+    toolStripSeparator3: ToolStripSeparator;
+    toolStripButton2: ToolStripButton;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
@@ -262,10 +271,10 @@ begin
           self.OpenListOfConnectedDevices.Enabled := true;  
           
           explorer.init(self.ExplorerTab, 
-                          self.FilesIconList, 
-                          self.ExplorerToolBar, 
-                          self.ExplorerDirectory_DoubleClick,
-                          self.ExplorerItemContextMenu);
+                        self.FilesIconList, 
+                        self.ExplorerToolBar, 
+                        self.ExplorerDirectory_DoubleClick,
+                        self.ExplorerItemContextMenu);
           
           self.UpdateSelectedDevice(_server.head);
           
@@ -288,11 +297,34 @@ begin
 end;
 
 
-procedure MainWindow.UpdateCountOfClientsLabel :=
-                     CountOfClientsLabel.Text := 
-                     CountOfClientsLabel.Text.Substring(0, 
-                     CountOfClientsLabel.Text.IndexOf(':') + 1) +
-                     _server_count_of_clients.ToString;
+procedure MainWindow.UpdateSelectedDevice(NewDevice: TClient);
+begin
+  _server.selectedClient := NewDevice;
+  
+  var path: string = _server.MessageHandler(GETPATH);
+  
+  // Console
+  self.ConsoleBox.Text := '';
+  self.consoleBox.AppendText(path + '>');
+  self.consoleBox.SelectionStart := self.consoleBox.Text.Length;
+  
+  // Explorer
+  self.ExplorerPathLabel.Text := path;
+  
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                _server.MessageHandler(E_GET_FILES));
+
+end;
+
+
+procedure MainWindow.UpdateCountOfClientsLabel();
+begin
+  self.Invoke(procedure () -> CountOfClientsLabel.Text := 
+   CountOfClientsLabel.Text.Substring(0, 
+   CountOfClientsLabel.Text.IndexOf(':') + 1) +
+   _server_count_of_clients.ToString
+  );
+end;
 
 /// Очищает консольное окно
 procedure MainWindow.cls(_t: string) := ConsoleBox.Text := _t;
@@ -388,9 +420,16 @@ procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs) :=
 explorer.Update(is_not_new_dir := true);
 
 
+procedure MainWindow.ExplorerTab_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  explorer.DeleteAllSelectedItems();
+end;
+
+
 procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
 begin
-  self.LabelPath.Text := _server.MessageHandler(E_ARROW_UP);
+  explorer.DeleteAllSelectedItems();
+  self.ExplorerPathLabel.Text := _server.MessageHandler(E_ARROW_UP);
   explorer.Update(_server.MessageHandler(E_GET_DIRS),
                   _server.MessageHandler(E_GET_FILES));
 end;
@@ -400,13 +439,13 @@ procedure MainWindow.ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs)
 begin
   var container := explorer.GetSplitContainer(sender);
   var folder_name: string = container.Panel2.Controls[0].Text;
+  explorer.DeleteAllSelectedItems();
   
   var response: string = _server.MessageHandler(E_ENTER_FOLDER + folder_name);
-  Println(response);
   if response.StartsWith('R@') then 
     ErrorHundler(response) 
   else begin
-    self.LabelPath.Text += '\' + folder_name;
+    self.ExplorerPathLabel.Text += '\' + folder_name;
     explorer.Update(_server.MessageHandler(E_GET_DIRS),
                     _server.MessageHandler(E_GET_FILES));
   end;                  
@@ -414,8 +453,8 @@ end;
 
 
 procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs) :=
-explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                  _server.MessageHandler(E_GET_FILES));
+                        explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                                        _server.MessageHandler(E_GET_FILES));
 
 
 procedure MainWindow.__select_all_Click(sender: Object; e: EventArgs);
@@ -434,12 +473,13 @@ begin
     MessageBox.Show('Нельзя передать папку!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error);
     exit;
   end;
+  
   var fileName := explorer.selected_items[0].Panel2.Controls[0].Text;
   var saveDialog := new SaveFileDialog();
-  saveDialog.Filter := 'All files (*.*)|*.*|Text files (*.txt)|*.txt';
-  saveDialog.Title := 'Сохранить файл как...';
-  saveDialog.FileName := fileName;
-  saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+      saveDialog.Filter := 'All files (*.*)|*.*|Text files (*.txt)|*.txt';
+      saveDialog.Title := 'Сохранить файл как...';
+      saveDialog.FileName := fileName;
+      saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
   
   if saveDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK then
   begin
@@ -453,29 +493,54 @@ begin
 end;
 
 
+procedure MainWindow.__cut_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  explorer.cut_or_copy_item_info.Code := E_CUT_ITEM;
+  explorer.cut_or_copy_item_info.SourcePath := self.ExplorerPathLabel.Text;
+  explorer.cut_or_copy_item_info.Items := explorer.GetSelectedItemsNames();
+end;
+
+
+procedure MainWindow.__copy_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  explorer.cut_or_copy_item_info.Code := E_COPY_ITEM;
+  explorer.cut_or_copy_item_info.SourcePath := self.ExplorerPathLabel.Text;
+  explorer.cut_or_copy_item_info.Items := explorer.GetSelectedItemsNames();
+end;
+
+
+procedure MainWindow.__paste_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  if (explorer.cut_or_copy_item_info.Code = nil) or
+     (explorer.cut_or_copy_item_info.TakeFrom = nil) then exit;
+  
+  explorer.cut_or_copy_item_info.DestinationPath := self.ExplorerPathLabel.Text;
+  var request: string = JsonConvert.SerializeObject(explorer.cut_or_copy_item_info);
+  
+  ErrorHundler(_server.MessageHandler(E_PASTE_ITEM + request));
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                  _server.MessageHandler(E_GET_FILES));
+end;
+
+
+procedure MainWindow.__delete_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  ErrorHundler(
+    _server.MessageHandler(
+      E_DELETE_ITEM +
+      self.ExplorerPathLabel.Text + 
+      explorer.GetSelectedItemsNames()
+    )
+  );
+  explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                  _server.MessageHandler(E_GET_FILES));
+end;
+
+
 procedure MainWindow.OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
 begin
   new ListWindow(_server, self.UpdateSelectedDevice);
 end;
 
-
-procedure MainWindow.UpdateSelectedDevice(NewDevice: TClient);
-begin
-  _server.selectedClient := NewDevice;
-  
-  var path: string = _server.MessageHandler(GETPATH);
-  
-  // Console
-  self.ConsoleBox.Text := '';
-  self.consoleBox.AppendText(path + '>');
-  self.consoleBox.SelectionStart := self.consoleBox.Text.Length;
-  
-  // Explorer
-  self.LabelPath.Text := path;
-  
-  explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                _server.MessageHandler(E_GET_FILES));
-
-end;
 
 end.

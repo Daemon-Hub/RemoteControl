@@ -257,8 +257,8 @@ type
       var selectClient := clnt = nil ? self.selectedClient : clnt;
       var stream := selectClient.client.GetStream();
       
-      stream.ReadTimeout := 5000;
-      stream.WriteTimeout := 5000;
+      stream.ReadTimeout := 10000;
+      stream.WriteTimeout := 10000;
       
       var message: string = msg;
       var buffer: array of byte;

@@ -9,7 +9,8 @@ uses
   System.Drawing,
   System.Threading,
   System.Windows.Forms,
-  Newtonsoft.Json;
+  Newtonsoft.Json, 
+  types;
   
 
 var
@@ -53,6 +54,9 @@ var
   /// Контекстное меню появляющееся при левом клике на объект (папка\файл)
   context_menu: ContextMenuStrip;
   
+  /// Информация про скопированный\вырезанный объект 
+  cut_or_copy_item_info: PasteInformation;
+  
   
 /// Инициальизирует необходимые объекты для работы модуля
 procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
@@ -68,6 +72,15 @@ function GetIconName(filename: string): string;
 
 /// Возвращает объект SplitContainer, который хранит obj
 function GetSplitContainer(obj: Object): SplitContainer;
+
+/// Возвращает названия выделенных папок и файлов в виде json строки 
+function GetSelectedItemsNames(): string;
+
+/// Удаляет все выделенные объекты
+procedure DeleteAllSelectedItems();
+
+/// Удаляет все выделенные объекты кроме одного (container)
+procedure DeleteAllSelectedItemsExceptSelected(container: SplitContainer);
 
 {$region EventHandlers}
 
@@ -96,6 +109,7 @@ begin
 
   items := new List<SplitContainer>(10);
   selected_items := new List<SplitContainer>(10);
+  cut_or_copy_item_info := new PasteInformation();
   
   __initialized__ := true;
 end;
@@ -215,6 +229,40 @@ begin
   Result := ctrl as SplitContainer;
 end;
 
+
+function GetSelectedItemsNames(): string;
+begin
+  var res := new List<string>();
+  foreach var item in selected_items do 
+    res.Add(item.Panel2.Controls[0].Text);
+  var Resu := JsonConvert.SerializeObject(res);
+  Println(resu);
+  Result := Resu;
+end;
+
+
+procedure DeleteAllSelectedItems();
+begin
+ for var id := selected_items.Count-1 downto 0 do begin
+   selected_items[id].BackColor := unselected_color;
+   selected_items.RemoveAt(id);
+ end;
+end;
+
+
+procedure DeleteAllSelectedItemsExceptSelected(container: SplitContainer);
+begin
+ var length: integer = selected_items.Count;
+ if length >= 2 then begin
+   for var id := length-1 downto 1 do begin
+     selected_items[id].BackColor := unselected_color;
+     selected_items.RemoveAt(id);
+   end;
+ end;
+  selected_items[0].BackColor := unselected_color;
+  selected_items[0] := container;
+end;
+
 {$region EventHandlers}
 
 procedure Control_MouseDown(sender: Object; e: MouseEventArgs);
@@ -222,19 +270,21 @@ begin
   var container: SplitContainer = GetSplitContainer(sender);
   container.BackColor := selected_color;
    
-  var length: integer = selected_items.Count;
-  if ((Control.ModifierKeys and Keys.Control) = Keys.Control) or 
-     (length = 0) then
-    selected_items.Add(container) 
-  else begin
-    if length >= 2 then begin
-      for var id := length-1 downto 1 do begin
-        selected_items[id].BackColor := unselected_color;
-        selected_items.RemoveAt(id);
-      end;
-    end;
-    selected_items[0].BackColor := unselected_color;
-    selected_items[0] := container;
+  if e.Button = MouseButtons.Right then begin
+    if selected_items.Count = 0 then
+      selected_items.Add(container) else
+    if not(container in selected_items) then 
+      DeleteAllSelectedItemsExceptSelected(container);
+  end else begin
+    if ((Control.ModifierKeys and Keys.Control) = Keys.Control) or (selected_items.Count = 0) then begin
+      if not(container in selected_items) then 
+        selected_items.Add(container)
+      else begin
+        container.BackColor := unselected_color;
+        selected_items.Remove(container);
+      end
+    end else 
+      DeleteAllSelectedItemsExceptSelected(container);
   end;
 end;
 

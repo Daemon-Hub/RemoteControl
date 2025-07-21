@@ -26,6 +26,8 @@ procedure CLS;
 procedure DIR;
 procedure HELP;
 procedure MKDIR(dirName: string);
+procedure RMDIR(pathToDirectory: string);
+procedure MOVE(source, dist: string);
 procedure SetPath(d: string);
 procedure RunCustomCommand(command: string);
 
@@ -103,14 +105,6 @@ begin
   
 end;
 
-//procedure __cd__(param: string);
-//begin
-//  var tmp := path + '\' + param;
-//  if System.IO.Directory.Exists(tmp) then
-//    path += '\' + param else
-//  if param = '..' then
-//    path := Copy(path, 1, path.LastIndexOf('\') - 1);
-//end;
 
 procedure CD(command: string);
 begin
@@ -132,6 +126,17 @@ procedure HELP := run('help');
 /// Создает папку
 procedure MKDIR(dirName: string) := run($'mkdir {dirName}');
 
+/// Удаляет папку и все её содержимое
+procedure RMDIR(pathToDirectory: string);
+begin
+  run($'rmdir /s /q {pathToDirectory}', true, true);
+end;
+
+/// Перемещает каталог полностью с его содержимым
+procedure MOVE(source, dist: string);
+begin
+  run($'robocopy "{source}" "{dist}" /E /MOVE /NFL /NDL /NJH /NJS /NP /R:0 /W:0', true, true);  
+end;
 
 /// Установить рабочую дирректорию
 procedure SetPath(d: string) := path := d;
