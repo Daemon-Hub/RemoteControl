@@ -48,7 +48,7 @@ type
   end;
 
 /// Показывает уведомление с известной ошибкой
-procedure ErrorHundler(error: string);
+procedure ErrorHandler(error: string);
 
 implementation
 
@@ -105,7 +105,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------- //
-procedure ErrorHundler(error: string);
+procedure ErrorHandler(error: string);
 begin
   new Notification(error);
 end;

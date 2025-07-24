@@ -9,22 +9,13 @@ uses
   System.Threading.Tasks,
   System.Windows.Forms,  
   explorer, server, client, types,
-  Notifications, 
+  Notifications, ProgressOverlayWindow,
   ListOfConnectedDevices,
   Newtonsoft.Json;
 
 type
   ApplicationState = (SERVER, CLIENT);
 
-var
-  _server: TcpServer;
-  _server_is_working: boolean;
-  _server_count_of_clients: integer;
-  _server_service: Thread;
-  
-  _client: TClient;
-  
-  AppState: ApplicationState;
 
 type
   MainWindow = class(Form)
@@ -52,6 +43,8 @@ type
     procedure __copy_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __paste_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __delete_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure ExplorerHomeBtn_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure ReceiveObject(fileName: string);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -78,8 +71,6 @@ type
     label1: &Label;
     ExplorerToolBar: ToolStrip;
     ExplorerToolBarButtonUp: ToolStripButton;
-    toolStripSeparator1: ToolStripSeparator;
-    ExplorerPathLabel: ToolStripLabel;
     ExplorerTabContextMenu: System.Windows.Forms.ContextMenuStrip;
     __paste: ToolStripMenuItem;
     __update: ToolStripMenuItem;
@@ -92,14 +83,25 @@ type
     OpenListOfConnectedDevices: Button;
     ExplorerItemsUpdateButton: ToolStripButton;
     __delete: ToolStripMenuItem;
-    toolStripSeparator2: ToolStripSeparator;
     SelectAllItems: ToolStripButton;
-    toolStripSeparator3: ToolStripSeparator;
     toolStripButton2: ToolStripButton;
+    ExplorerHomeBtn: ToolStripButton;
+    ExplorerPathLabel: ToolStripLabel;
     clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
   public
+    _server: TcpServer;
+    _server_is_working: boolean;
+    _server_count_of_clients: integer;
+    _server_service: Thread;
+    
+    _client: TClient;
+    
+    AppState: ApplicationState;
+    
+    ConnectedDevicesListWindow: ListWindow;
+  
     constructor;
     begin
       InitializeComponent;
@@ -160,9 +162,8 @@ begin
     end;
     
     ServerStartedInfo.Visible := true;
-    ServerStartedInfo.Text := 'Сервер успешно запущен' + #10;
-    ServerStartedInfo.Text += 'IPs:' + _server.ipv4.ToString() + #10;
-    ServerStartedInfo.Text += 'Port:' + _server.port.ToString() + #10;
+    ServerStartedInfo.Text := 'Сервер успешно запущен' + #10*2;
+    ServerStartedInfo.Text += 'Достыпные IP компьютера:' + #10 + _server.ipv4.ToString();
     
     ServerCreateButton.Text := 'Остановить';
     
@@ -183,7 +184,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = '172.19.0.1';//ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -232,7 +233,7 @@ end;
 procedure MainWindow.ClientConnectionStateMonitoring();
 begin
   
-  while _client.AppIsRunning do
+  while not(_client = nil) and _client.AppIsRunning do
     Thread.Sleep(1000);
   
   ClientIPMask.Enabled := true;
@@ -244,7 +245,7 @@ begin
   
   _client := nil;
   
-  ErrorHundler('Сервер закрыл соединение!');
+  ErrorHandler('Сервер закрыл соединение!');
 end;
 
 
@@ -278,7 +279,7 @@ begin
           
           self.UpdateSelectedDevice(_server.head);
           
-          ErrorHundler($'{_server.selectedClient.WinInfo.ComputerName} подключился{#13}IP:{_server.selectedClient.ip}'); 
+          ErrorHandler($'{_server.selectedClient.WinInfo.ComputerName} подключился{#13}IP:{_server.selectedClient.ip}'); 
         end 
         else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then begin
           cls();
@@ -301,18 +302,14 @@ procedure MainWindow.UpdateSelectedDevice(NewDevice: TClient);
 begin
   _server.selectedClient := NewDevice;
   
-  var path: string = _server.MessageHandler(GETPATH);
-  
   // Console
   self.ConsoleBox.Text := '';
-  self.consoleBox.AppendText(path + '>');
+  self.consoleBox.AppendText(NewDevice.WinInfo.ExInfo.Desktop + '>');
   self.consoleBox.SelectionStart := self.consoleBox.Text.Length;
   
   // Explorer
-  self.ExplorerPathLabel.Text := path;
-  
-  explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                _server.MessageHandler(E_GET_FILES));
+  self.ExplorerPathLabel.Text := 'Главная';
+  explorer.UpdateHomePage(NewDevice.WinInfo.ExInfo);
 
 end;
 
@@ -416,8 +413,12 @@ begin
 end;
 
 
-procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs) := 
-explorer.Update(is_not_new_dir := true);
+procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs);
+begin
+  if self.ExplorerPathLabel.Text = 'Главная' then
+    explorer.UpdateHomePage(explorer.home_info, false) else  
+    explorer.Update(is_not_new_dir := true);
+end;
 
 
 procedure MainWindow.ExplorerTab_MouseDown(sender: Object; e: MouseEventArgs);
@@ -428,33 +429,60 @@ end;
 
 procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
 begin
+  if self.ExplorerPathLabel.Text = 'Главная' then exit;
+  Println(self.ExplorerPathLabel.Text);
   explorer.DeleteAllSelectedItems();
-  self.ExplorerPathLabel.Text := _server.MessageHandler(E_ARROW_UP);
-  explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                  _server.MessageHandler(E_GET_FILES));
+  
+  if self.ExplorerPathLabel.Text in explorer.home_info.DrivesNames() then begin
+    self.ExplorerPathLabel.Text := 'Главная';
+    explorer.UpdateHomePage(_server.UpdateExInfo());
+  end else begin
+    self.ExplorerPathLabel.Text := _server.MessageHandler(E_ARROW_UP);
+    explorer.Update(_server.MessageHandler(E_GET_DIRS),
+                    _server.MessageHandler(E_GET_FILES));    
+  end;
 end;
 
 
 procedure MainWindow.ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
 begin
   var container := explorer.GetSplitContainer(sender);
-  var folder_name: string = container.Panel2.Controls[0].Text;
+  var folder_name, response: string;
+  
   explorer.DeleteAllSelectedItems();
   
-  var response: string = _server.MessageHandler(E_ENTER_FOLDER + folder_name);
+  folder_name := container.Panel2.Controls[0].Text;
+  if self.ExplorerPathLabel.Text = 'Главная' then begin
+    if not(':\' in folder_name) then
+      folder_name := explorer.home_info.GetItem(folder_name);
+    response := _server.MessageHandler(E_ENTER_SHORTCUT + folder_name);
+  end else
+    response := _server.MessageHandler(E_ENTER_FOLDER + folder_name);
+  
   if response.StartsWith('R@') then 
-    ErrorHundler(response) 
+    ErrorHandler(response) 
   else begin
-    self.ExplorerPathLabel.Text += '\' + folder_name;
+    if self.ExplorerPathLabel.Text = 'Главная' then
+       self.ExplorerPathLabel.Text := folder_name 
+    else begin
+      if self.ExplorerPathLabel.Text in explorer.home_info.DrivesNames() then
+         self.ExplorerPathLabel.Text += folder_name
+      else
+         self.ExplorerPathLabel.Text += SLASH + folder_name;
+    end;
     explorer.Update(_server.MessageHandler(E_GET_DIRS),
                     _server.MessageHandler(E_GET_FILES));
   end;                  
 end;
 
 
-procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs) :=
-                        explorer.Update(_server.MessageHandler(E_GET_DIRS),
-                                        _server.MessageHandler(E_GET_FILES));
+procedure MainWindow.__update_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  if self.ExplorerPathLabel.Text = 'Главная' then
+    explorer.UpdateHomePage(_server.UpdateExInfo())
+  else
+    explorer.Update(_server.MessageHandler(E_GET_DIRS), _server.MessageHandler(E_GET_FILES));
+end;                
 
 
 procedure MainWindow.__select_all_Click(sender: Object; e: EventArgs);
@@ -469,29 +497,98 @@ end;
 
 procedure MainWindow.__receive_file_Click(sender: Object; e: EventArgs);
 begin
-  if (explorer.selected_items[0].Panel1.Controls[0] as System.Windows.Forms.Label).ImageKey = 'dir.png' then begin
-    MessageBox.Show('Нельзя передать папку!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error);
-    exit;
-  end;
+  if (selected_items.Count = 1) and (GetImageLabel(selected_items[0]).ImageKey <> 'dir.png') then  
+    self.ReceiveObject(GetTextLabel(selected_items[0]).Text)
+  else begin
+    var folderDialog := new FolderBrowserDialog();
+    folderDialog.Description := 'Выберите папку для сохранения файлов';
+
+    if not(folderDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK) then begin
+      MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+      exit;
+    end;
+    var savePath: string = folderDialog.SelectedPath;
+    
+    self.Enabled := false;
   
-  var fileName := explorer.selected_items[0].Panel2.Controls[0].Text;
+    var progWin := new ProgressOverlay();
+        progWin.Location := new Point(
+          self.Left + (self.Width - progWin.Width) div 2,
+          self.Top + (self.Height - progWin.Height) div 2);
+        progWin.Show();
+        
+    var totalFiles := selected_items.Count;
+    var currentFile := 0;
+    
+    foreach var item in explorer.selected_items do begin
+      if GetImageLabel(item).ImageKey = 'dir.png' then begin
+        var response := JsonConvert.DeserializeObject&<array of string>(
+          _server.MessageHandler(
+            E_GET_ALL_FILES_IN_FOLDER+$'{self.ExplorerPathLabel.Text}{SLASH}{GetTextLabel(item).Text}'
+          )
+        );
+        totalFiles += response.Length - 1;
+        foreach file_path: string in response do begin
+          var finalPath := savePath + file_path.Replace(self.ExplorerPathLabel.Text, '');
+          self._server.ReceiveFile(file_path, finalPath);
+          Inc(currentFile);
+          progWin.SetProgress(currentFile, totalFiles);
+        end;
+      end else begin
+        var fileName := GetTextLabel(item).Text;
+        self._server.ReceiveFile(
+          $'{self.ExplorerPathLabel.Text}{SLASH}{fileName}', 
+          $'{savePath}{SLASH}{fileName}'
+        );
+        Inc(currentFile);
+        progWin.SetProgress(currentFile, totalFiles);
+      end;
+    end;
+    
+    self.Enabled := true;
+    
+    progWin.Close();
+    progWin.Dispose(true);
+    
+    MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk)
+  end;
+end;
+
+
+procedure MainWindow.ReceiveObject(fileName: string);
+begin
   var saveDialog := new SaveFileDialog();
-      saveDialog.Filter := 'All files (*.*)|*.*|Text files (*.txt)|*.txt';
+      saveDialog.Filter := 'All files (*.*)|*.*';
       saveDialog.Title := 'Сохранить файл как...';
       saveDialog.FileName := fileName;
       saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
-  
+
   if saveDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK then
   begin
     var savePath := saveDialog.FileName;
     
-    if _server.ReceiveFile(fileName, savePath) then
-      MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk); 
-      //MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error)
+    self.Enabled := false;
+    
+    var progWin := new ProgressOverlay();
+        progWin.Location := new Point(
+          self.Left + (self.Width - progWin.Width) div 2,
+          self.Top + (self.Height - progWin.Height) div 2);
+        progWin.Show();
+    
+    if _server.ReceiveFile($'{self.ExplorerPathLabel.Text}{SLASH}{fileName}', savePath, progWin) then
+      MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk)
+    else
+      MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error);
+    
+    self.Enabled := true;
+    
+    progWin.Close();
+    progWin.Dispose();
+    
   end else
     MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+  
 end;
-
 
 procedure MainWindow.__cut_MouseDown(sender: Object; e: MouseEventArgs);
 begin
@@ -517,7 +614,7 @@ begin
   explorer.cut_or_copy_item_info.DestinationPath := self.ExplorerPathLabel.Text;
   var request: string = JsonConvert.SerializeObject(explorer.cut_or_copy_item_info);
   
-  ErrorHundler(_server.MessageHandler(E_PASTE_ITEM + request));
+  ErrorHandler(_server.MessageHandler(E_PASTE_ITEM + request));
   explorer.Update(_server.MessageHandler(E_GET_DIRS),
                   _server.MessageHandler(E_GET_FILES));
 end;
@@ -525,11 +622,21 @@ end;
 
 procedure MainWindow.__delete_MouseDown(sender: Object; e: MouseEventArgs);
 begin
-  ErrorHundler(
+  var items := explorer.GetSelectedItemsNames();
+  var msg: string;
+  
+  if MessageBox.Show(
+      'Вы подтверждайте удаление всех выделенных объектов?',
+      'Удаление выделеного', 
+      MessageBoxButtons.YesNo, 
+      MessageBoxIcon.Question) = System.Windows.Forms.DialogResult.No 
+  then exit;
+
+  ErrorHandler(
     _server.MessageHandler(
       E_DELETE_ITEM +
       self.ExplorerPathLabel.Text + 
-      explorer.GetSelectedItemsNames()
+      items
     )
   );
   explorer.Update(_server.MessageHandler(E_GET_DIRS),
@@ -539,7 +646,23 @@ end;
 
 procedure MainWindow.OpenListOfConnectedDevices_Click(sender: Object; e: EventArgs);
 begin
-  new ListWindow(_server, self.UpdateSelectedDevice);
+  if ConnectedDevicesListWindow = nil then
+    self.ConnectedDevicesListWindow := new ListWindow(_server, self.UpdateSelectedDevice)
+  else begin
+    if self.ConnectedDevicesListWindow.Visible then
+      self.ConnectedDevicesListWindow.Activate() 
+    else begin
+      self.ConnectedDevicesListWindow.Update();
+      self.ConnectedDevicesListWindow.Show();
+    end;
+  end;
+end;
+
+
+procedure MainWindow.ExplorerHomeBtn_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  self.ExplorerPathLabel.Text := 'Главная';
+  explorer.UpdateHomePage(explorer.home_info, false);
 end;
 
 

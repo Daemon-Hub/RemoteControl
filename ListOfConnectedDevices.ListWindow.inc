@@ -2,9 +2,9 @@ procedure InitializeComponent;
     begin
         var resources: System.ComponentModel.ComponentResourceManager := new System.ComponentModel.ComponentResourceManager(typeof(ListWindow));
         self.ConnectedDevice := new System.Windows.Forms.SplitContainer();
+        self.StateButton := new System.Windows.Forms.CheckBox();
         self.DeviceIcon := new System.Windows.Forms.Label();
         self.Info := new System.Windows.Forms.Label();
-        self.StateButton := new System.Windows.Forms.CheckBox();
         (System.ComponentModel.ISupportInitialize(self.ConnectedDevice)).BeginInit();
         self.ConnectedDevice.Panel1.SuspendLayout();
         self.ConnectedDevice.Panel2.SuspendLayout();
@@ -34,6 +34,16 @@ procedure InitializeComponent;
         self.ConnectedDevice.SplitterDistance := 111;
         self.ConnectedDevice.TabIndex := 2;
         // 
+        // StateButton
+        // 
+        self.StateButton.Location := new System.Drawing.Point(0, 0);
+        self.StateButton.MaximumSize := new System.Drawing.Size(13, 13);
+        self.StateButton.MinimumSize := new System.Drawing.Size(13, 13);
+        self.StateButton.Name := 'StateButton';
+        self.StateButton.Size := new System.Drawing.Size(13, 13);
+        self.StateButton.TabIndex := 3;
+        self.StateButton.UseVisualStyleBackColor := true;
+        // 
         // DeviceIcon
         // 
         self.DeviceIcon.BackColor := System.Drawing.SystemColors.Control;
@@ -43,7 +53,6 @@ procedure InitializeComponent;
         self.DeviceIcon.Name := 'DeviceIcon';
         self.DeviceIcon.Size := new System.Drawing.Size(107, 111);
         self.DeviceIcon.TabIndex := 1;
-        self.DeviceIcon.Click += label2_Click;
         // 
         // Info
         // 
@@ -61,16 +70,6 @@ procedure InitializeComponent;
         self.Info.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
         self.Info.UseCompatibleTextRendering := true;
         // 
-        // StateButton
-        // 
-        self.StateButton.Location := new System.Drawing.Point(0, 0);
-        self.StateButton.MaximumSize := new System.Drawing.Size(13, 13);
-        self.StateButton.MinimumSize := new System.Drawing.Size(13, 13);
-        self.StateButton.Name := 'StateButton';
-        self.StateButton.Size := new System.Drawing.Size(13, 13);
-        self.StateButton.TabIndex := 3;
-        self.StateButton.UseVisualStyleBackColor := true;
-        // 
         // ListWindow
         // 
         self.ClientSize := new System.Drawing.Size(654, 384);
@@ -78,7 +77,8 @@ procedure InitializeComponent;
         self.Icon := (System.Drawing.Icon(resources.GetObject('$this.Icon')));
         self.Name := 'ListWindow';
         self.Text := 'Подключёные устройства ';
-        self.Load += ListWindow_Load;
+        self.FormClosing += ListWindow_FormClosing;
+        self.VisibleChanged += ListWindow_VisibleChanged;
         self.ConnectedDevice.Panel1.ResumeLayout(false);
         self.ConnectedDevice.Panel2.ResumeLayout(false);
         self.ConnectedDevice.Panel2.PerformLayout();

@@ -10,6 +10,7 @@
     <Item Type="SourceFile" Name="explorer.pas" Path="explorer.pas" />
     <Item Type="SourceFile" Name="Notifications.pas" Path="Notifications.pas" />
     <Item Type="SourceFile" Name="ListOfConnectedDevices.pas" Path="ListOfConnectedDevices.pas" />
+    <Item Type="SourceFile" Name="ProgressOverlayWindow.pas" Path="ProgressOverlayWindow.pas" />
     <Item Type="Reference" AssemblyName="System" FullAssemblyName="System.dll" />
     <Item Type="Reference" AssemblyName="System.Drawing" FullAssemblyName="System.Drawing.dll" />
     <Item Type="Reference" AssemblyName="System.Windows.Forms" FullAssemblyName="System.Windows.Forms.dll" />

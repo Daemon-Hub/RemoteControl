@@ -24,10 +24,12 @@ procedure InitializeComponent;
         self.__update := new System.Windows.Forms.ToolStripMenuItem();
         self.__paste := new System.Windows.Forms.ToolStripMenuItem();
         self.ExplorerToolBar := new System.Windows.Forms.ToolStrip();
+        self.ExplorerHomeBtn := new System.Windows.Forms.ToolStripButton();
         self.ExplorerToolBarButtonUp := new System.Windows.Forms.ToolStripButton();
-        self.toolStripSeparator1 := new System.Windows.Forms.ToolStripSeparator();
         self.ExplorerPathLabel := new System.Windows.Forms.ToolStripLabel();
         self.ExplorerItemsUpdateButton := new System.Windows.Forms.ToolStripButton();
+        self.SelectAllItems := new System.Windows.Forms.ToolStripButton();
+        self.toolStripButton2 := new System.Windows.Forms.ToolStripButton();
         self.splitContainer2 := new System.Windows.Forms.SplitContainer();
         self.label2 := new System.Windows.Forms.Label();
         self.FilesIconList := new System.Windows.Forms.ImageList(self.components);
@@ -39,10 +41,6 @@ procedure InitializeComponent;
         self.__rename := new System.Windows.Forms.ToolStripMenuItem();
         self.__receive_file := new System.Windows.Forms.ToolStripMenuItem();
         self.__delete := new System.Windows.Forms.ToolStripMenuItem();
-        self.toolStripSeparator2 := new System.Windows.Forms.ToolStripSeparator();
-        self.SelectAllItems := new System.Windows.Forms.ToolStripButton();
-        self.toolStripSeparator3 := new System.Windows.Forms.ToolStripSeparator();
-        self.toolStripButton2 := new System.Windows.Forms.ToolStripButton();
         self.DefaultTab.SuspendLayout();
         self.ClientTab.SuspendLayout();
         self.ServerTab.SuspendLayout();
@@ -340,13 +338,27 @@ procedure InitializeComponent;
         // 
         // ExplorerToolBar
         // 
-        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.InactiveCaption;
-        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[8](self.ExplorerToolBarButtonUp, self.toolStripSeparator1, self.ExplorerPathLabel, self.ExplorerItemsUpdateButton, self.toolStripSeparator2, self.SelectAllItems, self.toolStripSeparator3, self.toolStripButton2));
+        self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.AppWorkspace;
+        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[6](self.ExplorerHomeBtn, self.ExplorerToolBarButtonUp, self.ExplorerPathLabel, self.ExplorerItemsUpdateButton, self.SelectAllItems, self.toolStripButton2));
         self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
         self.ExplorerToolBar.MaximumSize := new System.Drawing.Size(0, 25);
         self.ExplorerToolBar.Name := 'ExplorerToolBar';
+        self.ExplorerToolBar.Padding := new System.Windows.Forms.Padding(0, 0, 5, 0);
         self.ExplorerToolBar.Size := new System.Drawing.Size(826, 25);
         self.ExplorerToolBar.TabIndex := 0;
+        // 
+        // ExplorerHomeBtn
+        // 
+        self.ExplorerHomeBtn.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerHomeBtn.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.ExplorerHomeBtn.Image := (System.Drawing.Image(resources.GetObject('ExplorerHomeBtn.Image')));
+        self.ExplorerHomeBtn.ImageTransparentColor := System.Drawing.Color.Magenta;
+        self.ExplorerHomeBtn.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
+        self.ExplorerHomeBtn.Name := 'ExplorerHomeBtn';
+        self.ExplorerHomeBtn.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
+        self.ExplorerHomeBtn.Size := new System.Drawing.Size(23, 22);
+        self.ExplorerHomeBtn.ToolTipText := 'Домой';
+        self.ExplorerHomeBtn.MouseDown += ExplorerHomeBtn_MouseDown;
         // 
         // ExplorerToolBarButtonUp
         // 
@@ -354,24 +366,20 @@ procedure InitializeComponent;
         self.ExplorerToolBarButtonUp.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
         self.ExplorerToolBarButtonUp.Image := (System.Drawing.Image(resources.GetObject('ExplorerToolBarButtonUp.Image')));
         self.ExplorerToolBarButtonUp.ImageTransparentColor := System.Drawing.Color.Transparent;
+        self.ExplorerToolBarButtonUp.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
         self.ExplorerToolBarButtonUp.Name := 'ExplorerToolBarButtonUp';
         self.ExplorerToolBarButtonUp.Size := new System.Drawing.Size(23, 22);
         self.ExplorerToolBarButtonUp.ToolTipText := 'Перейти в верхнюю директорию';
         self.ExplorerToolBarButtonUp.Click += ExplorerToolBarButtonUp_Click;
-        // 
-        // toolStripSeparator1
-        // 
-        self.toolStripSeparator1.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.toolStripSeparator1.Name := 'toolStripSeparator1';
-        self.toolStripSeparator1.Size := new System.Drawing.Size(6, 25);
         // 
         // ExplorerPathLabel
         // 
         self.ExplorerPathLabel.AutoToolTip := true;
         self.ExplorerPathLabel.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Text;
         self.ExplorerPathLabel.Name := 'ExplorerPathLabel';
+        self.ExplorerPathLabel.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
         self.ExplorerPathLabel.Size := new System.Drawing.Size(0, 22);
-        self.ExplorerPathLabel.TextAlign := System.Drawing.ContentAlignment.MiddleRight;
+        self.ExplorerPathLabel.TextAlign := System.Drawing.ContentAlignment.MiddleLeft;
         self.ExplorerPathLabel.ToolTipText := 'Путь, по которой вы сейчас находитесь';
         // 
         // ExplorerItemsUpdateButton
@@ -380,10 +388,35 @@ procedure InitializeComponent;
         self.ExplorerItemsUpdateButton.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
         self.ExplorerItemsUpdateButton.Image := (System.Drawing.Image(resources.GetObject('ExplorerItemsUpdateButton.Image')));
         self.ExplorerItemsUpdateButton.ImageTransparentColor := System.Drawing.Color.Magenta;
+        self.ExplorerItemsUpdateButton.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
         self.ExplorerItemsUpdateButton.Name := 'ExplorerItemsUpdateButton';
         self.ExplorerItemsUpdateButton.Size := new System.Drawing.Size(23, 22);
         self.ExplorerItemsUpdateButton.ToolTipText := 'Обновить';
         self.ExplorerItemsUpdateButton.MouseDown += __update_MouseDown;
+        // 
+        // SelectAllItems
+        // 
+        self.SelectAllItems.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.SelectAllItems.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.SelectAllItems.Image := (System.Drawing.Image(resources.GetObject('SelectAllItems.Image')));
+        self.SelectAllItems.ImageTransparentColor := System.Drawing.Color.Magenta;
+        self.SelectAllItems.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
+        self.SelectAllItems.Name := 'SelectAllItems';
+        self.SelectAllItems.Size := new System.Drawing.Size(23, 22);
+        self.SelectAllItems.ToolTipText := 'Выбрать всё';
+        self.SelectAllItems.Click += __select_all_Click;
+        // 
+        // toolStripButton2
+        // 
+        self.toolStripButton2.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.toolStripButton2.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.toolStripButton2.Image := (System.Drawing.Image(resources.GetObject('toolStripButton2.Image')));
+        self.toolStripButton2.ImageTransparentColor := System.Drawing.Color.Magenta;
+        self.toolStripButton2.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
+        self.toolStripButton2.Name := 'toolStripButton2';
+        self.toolStripButton2.Size := new System.Drawing.Size(23, 22);
+        self.toolStripButton2.ToolTipText := 'Вставить';
+        self.toolStripButton2.MouseDown += __paste_MouseDown;
         // 
         // splitContainer2
         // 
@@ -463,6 +496,15 @@ procedure InitializeComponent;
         self.FilesIconList.Images.SetKeyName(41, 'xlsx.png');
         self.FilesIconList.Images.SetKeyName(42, 'xml.png');
         self.FilesIconList.Images.SetKeyName(43, 'zip.png');
+        self.FilesIconList.Images.SetKeyName(44, 'Desktop.png');
+        self.FilesIconList.Images.SetKeyName(45, 'Documents.png');
+        self.FilesIconList.Images.SetKeyName(46, 'Downloads.png');
+        self.FilesIconList.Images.SetKeyName(47, 'Music.png');
+        self.FilesIconList.Images.SetKeyName(48, 'Pictures.png');
+        self.FilesIconList.Images.SetKeyName(49, 'User.png');
+        self.FilesIconList.Images.SetKeyName(50, 'drive.png');
+        self.FilesIconList.Images.SetKeyName(51, 'network-drive.png');
+        self.FilesIconList.Images.SetKeyName(52, 'usb-flash-drive.png');
         // 
         // label1
         // 
@@ -537,40 +579,6 @@ procedure InitializeComponent;
         self.__delete.Size := new System.Drawing.Size(190, 22);
         self.__delete.Text := 'Удалить';
         self.__delete.MouseDown += __delete_MouseDown;
-        // 
-        // toolStripSeparator2
-        // 
-        self.toolStripSeparator2.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.toolStripSeparator2.Name := 'toolStripSeparator2';
-        self.toolStripSeparator2.Size := new System.Drawing.Size(6, 25);
-        // 
-        // SelectAllItems
-        // 
-        self.SelectAllItems.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.SelectAllItems.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-        self.SelectAllItems.Image := (System.Drawing.Image(resources.GetObject('SelectAllItems.Image')));
-        self.SelectAllItems.ImageTransparentColor := System.Drawing.Color.Magenta;
-        self.SelectAllItems.Name := 'SelectAllItems';
-        self.SelectAllItems.Size := new System.Drawing.Size(23, 22);
-        self.SelectAllItems.Text := 'toolStripButton1';
-        self.SelectAllItems.Click += __select_all_Click;
-        // 
-        // toolStripSeparator3
-        // 
-        self.toolStripSeparator3.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.toolStripSeparator3.Name := 'toolStripSeparator3';
-        self.toolStripSeparator3.Size := new System.Drawing.Size(6, 25);
-        // 
-        // toolStripButton2
-        // 
-        self.toolStripButton2.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.toolStripButton2.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-        self.toolStripButton2.Image := (System.Drawing.Image(resources.GetObject('toolStripButton2.Image')));
-        self.toolStripButton2.ImageTransparentColor := System.Drawing.Color.Magenta;
-        self.toolStripButton2.Name := 'toolStripButton2';
-        self.toolStripButton2.Size := new System.Drawing.Size(23, 22);
-        self.toolStripButton2.Text := 'toolStripButton2';
-        self.toolStripButton2.MouseDown += __paste_MouseDown;
         // 
         // MainWindow
         // 

@@ -7,11 +7,11 @@ uses System, System.Drawing, System.Windows.Forms, client, server, types;
 type
   ListWindow = class(Form)
     function NewItem(desc: string; selected: boolean): SplitContainer;
-    procedure label2_Click(sender: Object; e: EventArgs);
-    procedure ListWindow_Load(sender: Object; e: EventArgs);
-    procedure Update();
+    procedure UpdateContents();
     function GetImage(IconKey: string): Image;
     procedure StateButton_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure ListWindow_FormClosing(sender: Object; e: FormClosingEventArgs);
+    procedure ListWindow_VisibleChanged(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource ListOfConnectedDevices.ListWindow.resources}
@@ -35,10 +35,9 @@ type
       
       self._server := __server__;
       self.UpdateSelectedDevice := __update_method__;
-      self.connected_devices := _server.Walk();
       self.items := new List<SplitContainer>(10);
       
-      self.Update();
+      self.UpdateContents();
       self.Show();
     end;
   end;
@@ -46,11 +45,22 @@ type
 implementation
 
 
-procedure ListWindow.Update();
+procedure ListWindow.UpdateContents();
 begin
-  foreach var device in connected_devices do 
-    items.Add(NewItem(device.WinInfo.OS + #10 + 'IP:' + device.ip + #10 + device.WinInfo.UserName + '@' + device.WinInfo.ComputerName, 
-                      _server.selectedClient = device));
+  self.connected_devices := self._server.Walk();
+  self.items.Clear();
+  
+  foreach var device in self.connected_devices do 
+    self.items.Add(
+      NewItem(
+        device.WinInfo.OS + #10 + 
+        'IP:' + device.ip + #10 + 
+        device.WinInfo.UserName + '@' + 
+        device.WinInfo.ComputerName,
+        
+        self._server.selectedClient = device
+      )
+    );
   
   
   self.Controls.Clear();
@@ -92,17 +102,16 @@ begin
   if selected then selectedDeviceCheckBtn := __StateButton;
   
   //  __Image
-  var __Image: System.Windows.Forms.Label = new System.Windows.Forms.Label();
+  var __Image: &Label = new &Label();
   __Image.BackColor := System.Drawing.SystemColors.Control;
   __Image.Dock := System.Windows.Forms.DockStyle.Fill;
   __Image.Image := self.GetImage(Copy(desc, 9, 2).Replace(' ', ''));
   __Image.Location := new System.Drawing.Point(0, 0);
   __Image.Size := new System.Drawing.Size(110, 110);
   __Image.TabIndex := 1;
-  __Image.Click += label2_Click;
   
   //  __Info
-  var __Info: System.Windows.Forms.Label = new System.Windows.Forms.Label();
+  var __Info: &Label = new &Label();
   __Info.AutoEllipsis := true;
   __Info.AutoSize := true;
   __Info.BackColor := System.Drawing.SystemColors.Control;
@@ -147,17 +156,6 @@ begin
 end;
 
 
-procedure ListWindow.label2_Click(sender: Object; e: EventArgs);
-begin
-  
-end;
-
-
-procedure ListWindow.ListWindow_Load(sender: Object; e: EventArgs);
-begin
-  
-end;
-
 procedure ListWindow.StateButton_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   var newCheckBtn := (sender as Control) as CheckBox;
@@ -175,6 +173,18 @@ begin
       items.FindIndex(
         item -> item = (selectedDeviceCheckBtn.Parent.Parent as SplitContainer)
   )]);
+end;
+
+procedure ListWindow.ListWindow_FormClosing(sender: Object; e: FormClosingEventArgs);
+begin
+  e.Cancel := true; 
+  self.Hide();   
+end;
+
+procedure ListWindow.ListWindow_VisibleChanged(sender: Object; e: EventArgs);
+begin
+  if self.Visible then
+    self.UpdateContents();
 end;
 
 end.

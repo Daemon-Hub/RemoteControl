@@ -1,6 +1,7 @@
 procedure InitializeComponent;
     begin
         self.components := new System.ComponentModel.Container();
+        var resources: System.ComponentModel.ComponentResourceManager := new System.ComponentModel.ComponentResourceManager(typeof(Notification));
         self.MessageText := new System.Windows.Forms.Label();
         self.FormClosingAnimation := new System.Windows.Forms.Timer(self.components);
         self.FormShowAnimation := new System.Windows.Forms.Timer(self.components);
@@ -41,6 +42,7 @@ procedure InitializeComponent;
         self.ClientSize := new System.Drawing.Size(300, 100);
         self.Controls.Add(self.MessageText);
         self.FormBorderStyle := System.Windows.Forms.FormBorderStyle.None;
+        self.Icon := (System.Drawing.Icon(resources.GetObject('$this.Icon')));
         self.Name := 'Notification';
         self.Opacity := 0;
         self.StartPosition := System.Windows.Forms.FormStartPosition.Manual;

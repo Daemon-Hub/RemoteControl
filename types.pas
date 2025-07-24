@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Collections.Generic;
+uses System.Collections.Generic, Newtonsoft.Json;
 
 const
   /// Предоставляет символ, задаваемый платформой, для разделения уровней папок в строке пути
@@ -20,6 +20,7 @@ const
   E_GET_FILES = 'E@03';
   E_ARROW_UP = 'E@04';
   E_ENTER_FOLDER = 'E@05';
+  E_ENTER_SHORTCUT = 'E@06';
   
   //  WORKING WITH EXPLORER ITEMS  //
   E_RECEIVE_FILE = 'E@10';
@@ -28,6 +29,7 @@ const
   E_COPY_ITEM = 'E@13';
   E_PASTE_ITEM = 'E@14';
   E_DELETE_ITEM = 'E@15';
+  E_GET_ALL_FILES_IN_FOLDER = 'E@16';
   
   //  ERROR CODES  //
   E_ERROR_OPEN_FILE = 'R@20';
@@ -42,30 +44,68 @@ function ImageFromBase64(base64: string): System.Drawing.Image;
 /// Удаляет вначале и в конце строки все chars
 function Strip(str: string; chars: string := ' '): string;
 
+
 type
   /// Представляет состояние выполнения сервисов
   ServiceState = (Run, Stop, Resume);
+  
+  /// Необходимая информация для коректной работы проводника
+  ExplorerInformation = record
+    public Drives: array of System.IO.DriveInfo;
+    public Desktop, Downloads, Music, Documents, Pictures, User: string;
+    constructor(dr: array of System.IO.DriveInfo; params commons: array of string);
+    begin
+      self.Drives := dr;
+      (Desktop, Documents, Music, Pictures, User) := commons;
+      Downloads := $'{User}{SLASH}Downloads';
+    end;
+    
+    function GetSpecialFolders() := [Desktop, Downloads, Music, Pictures, Documents, User];
+    function GetItem(key: string): string;
+    begin
+      case key of
+        'Рабочий стол': Result := self.Desktop;
+        'Загрузки': Result := self.Downloads;
+        'Документы': Result := self.Documents;
+        'Изображения': Result := self.Pictures;
+        'Музыка': Result := self.Music;
+      else Result := self.User;
+      end;      
+    end;
+    
+    function DrivesNames(): set of string;
+    begin
+      var res: set of string;
+      foreach var drive in self.Drives do 
+        res += (drive.Name);
+      Result := res;
+    end;
+  end;
+  
   /// Представляет структуру для хранения информации про систему клиентов
   WindowsInformation = record
     public OS, Platform, UserName, ComputerName: string;
-    public Drives: array of System.IO.DriveInfo;
-    
-    constructor(params info: array of object);
+    public ExInfo: ExplorerInformation;
+    constructor(ex: ExplorerInformation; params info: array of object);
     begin
-      self.OS := info[0] as string;
-      self.Platform := info[1] as string;
-      self.UserName := info[2] as string;
+      self.ExInfo       := ex;
+      self.OS           := info[0] as string;
+      self.Platform     := info[1] as string;
+      self.UserName     := info[2] as string;
       self.ComputerName := info[3] as string;
-      self.Drives := info[4] as array of System.IO.DriveInfo;
     end;
   end;
+  
   /// Хранит в себе путь к файлу/папке (TakeFrom), который был вырезан/скопирован (Code) и куда ее надо вставить (PasteHere)
   PasteInformation = record
     public Code, SourcePath, DestinationPath, Items: string;
-    constructor(); begin end;
+    constructor();begin end;
+    /// Откуда копировать
     function TakeFrom(item: string): string := $'{self.SourcePath}{SLASH}{item}';
+    /// Куда вставлять
     function PasteHere(item: string): string := $'{self.DestinationPath}{SLASH}{item}';
   end;
+
 
 var
   /// 
@@ -106,5 +146,6 @@ begin
     to_ := from;
   Result := Copy(str, from, to_ - from + 1);
 end;
+
 
 end.

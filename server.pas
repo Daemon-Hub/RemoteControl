@@ -6,8 +6,10 @@ uses
   System.Threading,
   System.Text,
   System.Net, 
+  System.IO,
   Newtonsoft.Json,
   types, client,
+  ProgressOverlayWindow,
   Notifications;
 
 
@@ -19,7 +21,6 @@ type
     public ipv4: string;
     public head, tail: TClient;
     public CountOfClients: byte;
-    public path: string;
     public messageSending: boolean;
     public _accept_service, _pp_service: Thread;
     public port: word;
@@ -61,10 +62,11 @@ type
     function GetIPAddrs(): string;
     begin
       var res: string = '';
-      foreach var addr in Dns.GetHostByName(Dns.GetHostName()).AddressList do begin
+      foreach var addr in Dns.GetHostByName(Dns.GetHostName()).AddressList do
+      begin
         if addr.ToString() in ['172.19.0.1', '0.0.0.0'] then
           continue;
-        res += addr.ToString() + ', ';
+        res += addr.ToString() + #10;
       end;
       Result := res;
     end;
@@ -218,7 +220,7 @@ type
           var __connected_devices := self.Walk();
           
           {$omp parallel for}
-          for id: byte := 0 to __connected_devices.Length-1 do
+          for id: byte := 0 to __connected_devices.Length - 1 do
           begin
             var data: array of byte;
             try
@@ -233,7 +235,7 @@ type
               if (messageSending = false) and (responseStatus = 0) then
                 self.RemoveClient(__connected_devices[id]);
               
-            except 
+            except
               self.RemoveClient(__connected_devices[id]);
             end;
           end;
@@ -241,7 +243,7 @@ type
           self.messageSending := false;
         end;
         
-        Thread.Sleep(10000);
+        Thread.Sleep(6000);
       end; // while
     end;
     
@@ -266,58 +268,81 @@ type
       SetLength(buffer, message.Length);
       buffer := Encoding.UTF8.GetBytes(message);
       
-      stream.Write(buffer, 0, buffer.Length);
+      var len: integer;
+      try
+        stream.Write(buffer, 0, buffer.Length);
+        
+        SetLength(buffer, selectClient.client.ReceiveBufferSize);
+        len := stream.Read(buffer, 0, buffer.Length);
+        message := Encoding.UTF8.GetString(buffer, 0, len);
+      except
+        message := 'Произошла ошибка при передаче данных!';
+        ErrorHandler(message);
+      end;
       
-      SetLength(buffer, selectClient.client.ReceiveBufferSize);
-      var len := stream.Read(buffer, 0, buffer.Length); 
-      
-      message := Encoding.UTF8.GetString(buffer, 0, len);
-      
-      Result := message;
+      stream.Flush();
       self.messageSending := false;
+      Result := message;
     end;
     
     /// Принимает файл fileName и сохраняет его по пути savePath
-    public function ReceiveFile(fileName, savePath: string): boolean;
+    public function ReceiveFile(fileName, savePath: string; progWin: ProgressOverlay := nil): boolean;
     begin
       while self.messageSending do 
         Thread.Sleep(10);
       
       self.messageSending := true;
-    
+      
+      Println(fileName);
+      Println(savePath);
+      
       var stream := self.selectedClient.client.GetStream();
-      
-      // Отправка команды и имени файла
+      var FStream: FileStream;
       var message := E_RECEIVE_FILE + fileName;
-      var buffer := Encoding.UTF8.GetBytes(message);
+      var buffer := new byte[4096];
       
+      buffer := Encoding.UTF8.GetBytes(message);
       stream.Write(buffer, 0, buffer.Length);
+            
+      // Получение размера файла //
+      var readCount := stream.Read(buffer, 0, buffer.Length);
+      message := Encoding.UTF8.GetString(buffer, 0, readCount);
       
-      // Получение размера файла
-      SetLength(buffer, self.selectedClient.client.ReceiveBufferSize);
-      stream.Read(Buffer, 0, buffer.Length);
-      
-      message := Encoding.UTF8.GetString(Buffer);
-      
-      if message.StartsWith('R@') then begin
-        ErrorHundler(message);
+      if message.StartsWith('R@') then
+      begin
+        ErrorHandler(message);
         self.messageSending := false;
         exit(false);
       end;
-        
+         
       var fileSize := System.BitConverter.ToInt64(Buffer, 0);
       
+      // Начало передачи файла //
       var receivedBytes := 0;
       var readBytes := 0;
       var chunk := new byte[4096];
+
+      try
+        FStream := SafeCreateFile(savePath);
+      except on e: Exception do
+        begin
+          self.messageSending := false;
+          ErrorHandler('Ошибка создания файла: ' + e.Message); 
+          exit(false);
+        end;
+      end;
       
-      var FStream := System.IO.File.Create(savePath);
-      
-      while receivedBytes < fileSize do begin
+      while receivedBytes < fileSize do
+      begin
+        if progWin <> nil then begin
+          var percent := Round(receivedBytes / fileSize * 100);
+          progWin.Invoke( procedure -> progWin.SetProgress(percent) );
+        end;
+
         var toRead := Min(chunk.Length, fileSize - receivedBytes);
         readBytes := stream.Read(chunk, 0, toRead);
         
-        if readBytes = 0 then break; // соединение прервано
+        if readBytes = 0 then break;
         
         FStream.Write(chunk, 0, readBytes);
         receivedBytes += readBytes;
@@ -325,16 +350,43 @@ type
       
       FStream.Close();
       
-      stream.Read(chunk, 0, 3);
-      var ReceiveEndCode := Encoding.UTF8.GetString(chunk, 0, 3);
+      ReadExact(stream, chunk, 4);
+      var ReceiveEndCode := Encoding.UTF8.GetString(chunk, 0, 4);
       
-      // Можно ещё принять "успешно завершено" маркер (по желанию)
       if (receivedBytes = fileSize) and (ReceiveEndCode = E_FILE_SUCCESSFULLY_TRANSFERRED) then
-        Result := true else 
-        System.IO.File.Delete(savePath);
-        
+        Result := true 
+      else
+        &File.Delete(savePath);
+      
+      stream.Flush();
       self.messageSending := false;
     end;
+    
+    /// Читает до тех пор пока не прочтет указанное количество байт
+    function ReadExact(stream: NetworkStream; buffer: array of byte; count: integer): boolean;
+    begin
+      var offset := 0;
+      while offset < count do
+      begin
+        var read := stream.Read(buffer, offset, count - offset);
+        if read = 0 then exit(false);
+        offset += read;
+      end;
+      Result := true;
+    end;
+    
+    /// Создает файл по указанному пути, в котором указаны не существующие папки
+    function SafeCreateFile(__path__: string): FileStream;
+    begin
+      var dir := Path.GetDirectoryName(__path__);
+      
+      if not Directory.Exists(dir) then
+        Directory.CreateDirectory(dir);
+      
+      Result := &File.Create(__path__); 
+    end;
+    
+    public function UpdateExInfo(): types.ExplorerInformation := JsonConvert.DeserializeObject&<WindowsInformation>(self.MessageHandler(GET_WIN_INFO)).ExInfo;
   
   end;// class
 
