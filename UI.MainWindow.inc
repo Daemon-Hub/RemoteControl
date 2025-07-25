@@ -1,4 +1,4 @@
-procedure InitializeComponent;
+﻿procedure InitializeComponent;
     begin
         self.components := new System.ComponentModel.Container();
         var resources: System.ComponentModel.ComponentResourceManager := new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
@@ -264,7 +264,7 @@ procedure InitializeComponent;
         self.ConsoleBox.CausesValidation := false;
         self.ConsoleBox.ContextMenuStrip := self.contextMenuStrip1;
         self.ConsoleBox.Dock := System.Windows.Forms.DockStyle.Fill;
-        self.ConsoleBox.Font := new System.Drawing.Font('Microsoft Sans Serif', 14.25, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
+        self.ConsoleBox.Font := new System.Drawing.Font('Lucida Console', 12, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
         self.ConsoleBox.ForeColor := System.Drawing.SystemColors.Menu;
         self.ConsoleBox.ImeMode := System.Windows.Forms.ImeMode.NoControl;
         self.ConsoleBox.Location := new System.Drawing.Point(3, 3);
@@ -274,7 +274,6 @@ procedure InitializeComponent;
         self.ConsoleBox.ScrollBars := System.Windows.Forms.ScrollBars.Vertical;
         self.ConsoleBox.Size := new System.Drawing.Size(826, 164);
         self.ConsoleBox.TabIndex := 0;
-        self.ConsoleBox.WordWrap := false;
         self.ConsoleBox.KeyDown += ConsoleBox_KeyDown;
         self.ConsoleBox.MouseDown += ConsoleBox_MouseDown;
         // 
@@ -589,7 +588,6 @@ procedure InitializeComponent;
         self.Name := 'MainWindow';
         self.Text := 'Remote Control';
         self.FormClosing += MainWindow_FormClosing;
-        self.Load += Form1_Load;
         self.DefaultTab.ResumeLayout(false);
         self.ClientTab.ResumeLayout(false);
         self.ClientTab.PerformLayout();

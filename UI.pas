@@ -19,7 +19,6 @@ type
 
 type
   MainWindow = class(Form)
-    procedure Form1_Load(sender: Object; e: EventArgs);
     procedure ServerCreate_Click(sender: Object; e: EventArgs);
     procedure ClientConnectButton_Click(sender: Object; e: EventArgs);
     procedure ServerConnectionService();
@@ -44,7 +43,6 @@ type
     procedure __paste_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __delete_MouseDown(sender: Object; e: MouseEventArgs);
     procedure ExplorerHomeBtn_MouseDown(sender: Object; e: MouseEventArgs);
-    procedure ReceiveObject(fileName: string);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -53,12 +51,12 @@ type
     ServerTab: TabPage;
     ServerCreateButton: Button;
     ServerStartedInfo: &Label;
-    clientConnectButton: Button;
+    ClientConnectButton: Button;
     ClientIPMask: MaskedTextBox;
-    clientConnectState: &Label;
+    ClientConnectState: &Label;
     UIIconList: ImageList;
-    components: System.ComponentModel.IContainer;
-    splitContainer1: SplitContainer;
+    Components: System.ComponentModel.IContainer;
+    SplitContainer1: SplitContainer;
     ClientControlTab: TabControl;
     ConsoleTab: TabPage;
     ConsoleBox: TextBox;
@@ -87,7 +85,7 @@ type
     toolStripButton2: ToolStripButton;
     ExplorerHomeBtn: ToolStripButton;
     ExplorerPathLabel: ToolStripLabel;
-    clientConnectingProgress: ProgressBar;
+    ClientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
   public
@@ -112,9 +110,6 @@ type
   end;
 
 implementation
-
-
-procedure MainWindow.Form1_Load(sender: Object; e: EventArgs);begin end;
 
 
 procedure MainWindow.MainWindow_FormClosing(sender: Object; e: FormClosingEventArgs);
@@ -184,7 +179,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = '172.29.80.1';//ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -304,8 +299,8 @@ begin
   
   // Console
   self.ConsoleBox.Text := '';
-  self.consoleBox.AppendText(NewDevice.WinInfo.ExInfo.Desktop + '>');
-  self.consoleBox.SelectionStart := self.consoleBox.Text.Length;
+  self.ConsoleBox.AppendText(_server.MessageHandler(GETPATH) + '>');
+  self.ConsoleBox.SelectionStart := self.consoleBox.Text.Length;
   
   // Explorer
   self.ExplorerPathLabel.Text := 'Главная';
@@ -331,54 +326,65 @@ procedure MainWindow.ConsoleBox_KeyDown(sender: Object; e: KeyEventArgs);
 begin
   {$region Options}
   
+  // Отключаем стрелки верх и вниз
   if e.KeyCode in [Keys.UP, Keys.Down] then begin
     e.Handled := true;
     exit;
   end;
   
-  var pos := ConsoleBox.Text.LastIndexOf('>');
+  // Позиция с которой начинается ввод команды
+  var inputStart: integer = ConsoleBox.Text.LastIndexOf('>') + 1;
   
+  // На клавишу Home перемещаемся в начало строки
   if e.KeyCode = Keys.Home then begin
     e.Handled := true;
-    ConsoleBox.SelectionStart := pos + 1;
+    ConsoleBox.SelectionStart := inputStart;
     exit;
   end;
   
+  // На клавишу End перемещаемся в конец строки
   if e.KeyCode = Keys.End then begin
     e.Handled := true;
     ConsoleBox.SelectionStart := ConsoleBox.Text.Length;
     exit;
   end;
   
-  // Нельзя переступать стрелкой влево знак >
-  if (e.KeyCode = Keys.Left) and (ConsoleBox.SelectionStart = pos + 1) then begin
+  // Нельзя переступать знак '>' клавишей лево 
+  if (e.KeyCode = Keys.Left) and (ConsoleBox.SelectionStart = inputStart) then begin
     e.Handled := true;
-    ConsoleBox.SelectionStart := pos + 1;
+    ConsoleBox.SelectionStart := inputStart;
     exit;
   end;
   
   // Backspace можно использовать только когда курсор стоит после знака >
-  if (e.KeyCode = Keys.Back) and (not (ConsoleBox.SelectionStart > pos + 1)) then begin
+  if (e.KeyCode = Keys.Back) and (ConsoleBox.SelectionStart <= inputStart) then begin
     e.Handled := true;
     e.SuppressKeyPress := true;
     exit;
   end;
   
   // Запрещаем редактирование предыдущего текста
-  if ConsoleBox.SelectionStart < pos + 1 then begin
-    e.Handled := true;
-    e.SuppressKeyPress := true;
-    exit;
+  if ConsoleBox.SelectionStart < inputStart then 
+    ConsoleBox.SelectionStart := ConsoleBox.Text.Length;
+  
+  // Отслеживаем переполнение консоли
+  if ConsoleBox.Text.Length >= 60000 then
+  begin
+    var startCut := ConsoleBox.Text.IndexOf(#13#10, ConsoleBox.Text.Length div 2);
+    if startCut <> -1 then
+      ConsoleBox.Text := ConsoleBox.Text.Substring(startCut + 2); // +2 = длина CRLF
+    inputStart := ConsoleBox.Text.LastIndexOf('>') + 1;
   end;
+
   
   {$endregion Options}
   // -------------------------- Enter Pressed -------------------------- //
-  
+  Println(ConsoleBox.Text.Length);
   if e.KeyCode <> Keys.Enter then exit;
   
-  e.SuppressKeyPress := true; // Отключаем звук Enter
+  e.SuppressKeyPress := true; 
   
-  var command := consoleBox.Lines[consoleBox.Lines.Length-1][2:];
+  var command := ConsoleBox.Text.Substring(inputStart);
   
   if command in ['cls', 'clear'] then begin
     cls(_server.MessageHandler(GETPATH) + '>');
@@ -390,12 +396,12 @@ begin
     msg := _server.MessageHandler(command);
   
   if 'cd' in command then
-    consoleBox.AppendText(#13#10 + _server.MessageHandler(GETPATH) + '>') else
-    consoleBox.AppendText(#13#10 + msg + #13#10 + _server.MessageHandler(GETPATH) + '>');
+    ConsoleBox.AppendText(#13#10 + _server.MessageHandler(GETPATH) + '>') else
+    ConsoleBox.AppendText(#13#10 + msg + #13#10 + _server.MessageHandler(GETPATH) + '>');
   
   // Автопрокрутка вниз
-  consoleBox.SelectionStart := consoleBox.Text.Length;
-  consoleBox.ScrollToCaret();
+  ConsoleBox.SelectionStart := ConsoleBox.Text.Length;
+  ConsoleBox.ScrollToCaret();
   
 end;
 
@@ -404,7 +410,8 @@ procedure MainWindow.ConsoleBox_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   if e.Button = System.Windows.Forms.MouseButtons.Right then begin
     if ConsoleBox.SelectionLength > 0 then
-      Clipboard.SetText(Copy(ConsoleBox.Text, ConsoleBox.SelectionStart, ConsoleBox.SelectionLength)) else
+      Clipboard.SetText(ConsoleBox.SelectedText)
+                    else
     if Clipboard.ContainsText() then
       ConsoleBox.Text += Clipboard.GetText();
     consoleBox.SelectionStart := consoleBox.Text.Length;
@@ -430,7 +437,7 @@ end;
 procedure MainWindow.ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
 begin
   if self.ExplorerPathLabel.Text = 'Главная' then exit;
-  Println(self.ExplorerPathLabel.Text);
+//  Println(self.ExplorerPathLabel.Text);
   explorer.DeleteAllSelectedItems();
   
   if self.ExplorerPathLabel.Text in explorer.home_info.DrivesNames() then begin
@@ -497,98 +504,59 @@ end;
 
 procedure MainWindow.__receive_file_Click(sender: Object; e: EventArgs);
 begin
-  if (selected_items.Count = 1) and (GetImageLabel(selected_items[0]).ImageKey <> 'dir.png') then  
-    self.ReceiveObject(GetTextLabel(selected_items[0]).Text)
-  else begin
-    var folderDialog := new FolderBrowserDialog();
-    folderDialog.Description := 'Выберите папку для сохранения файлов';
+  var folderDialog := new FolderBrowserDialog();
+  folderDialog.Description := 'Выберите папку для сохранения файлов';
 
-    if not(folderDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK) then begin
-      MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-      exit;
-    end;
-    var savePath: string = folderDialog.SelectedPath;
-    
-    self.Enabled := false;
+  if not(folderDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK) then begin
+    MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+    exit;
+  end;
+  var savePath: string = folderDialog.SelectedPath;
   
-    var progWin := new ProgressOverlay();
-        progWin.Location := new Point(
-          self.Left + (self.Width - progWin.Width) div 2,
-          self.Top + (self.Height - progWin.Height) div 2);
-        progWin.Show();
-        
-    var totalFiles := selected_items.Count;
-    var currentFile := 0;
-    
-    foreach var item in explorer.selected_items do begin
-      if GetImageLabel(item).ImageKey = 'dir.png' then begin
-        var response := JsonConvert.DeserializeObject&<array of string>(
-          _server.MessageHandler(
-            E_GET_ALL_FILES_IN_FOLDER+$'{self.ExplorerPathLabel.Text}{SLASH}{GetTextLabel(item).Text}'
-          )
-        );
-        totalFiles += response.Length - 1;
-        foreach file_path: string in response do begin
-          var finalPath := savePath + file_path.Replace(self.ExplorerPathLabel.Text, '');
-          self._server.ReceiveFile(file_path, finalPath);
-          Inc(currentFile);
-          progWin.SetProgress(currentFile, totalFiles);
-        end;
-      end else begin
-        var fileName := GetTextLabel(item).Text;
-        self._server.ReceiveFile(
-          $'{self.ExplorerPathLabel.Text}{SLASH}{fileName}', 
-          $'{savePath}{SLASH}{fileName}'
-        );
+  self.Enabled := false;
+
+  var progWin := new ProgressOverlay();
+      progWin.Location := new Point(
+        self.Left + (self.Width - progWin.Width) div 2,
+        self.Top + (self.Height - progWin.Height) div 2);
+      progWin.Show();
+      
+  var totalFiles := selected_items.Count;
+  var currentFile := 0;
+  
+  foreach var item in explorer.selected_items do begin
+    if GetImageLabel(item).ImageKey = 'dir.png' then begin
+      var response := JsonConvert.DeserializeObject&<array of string>(
+        _server.MessageHandler(
+          E_GET_ALL_FILES_IN_FOLDER+$'{self.ExplorerPathLabel.Text}{SLASH}{GetTextLabel(item).Text}'
+        )
+      );
+      totalFiles += response.Length - 1;
+      foreach file_path: string in response do begin
+        var finalPath := savePath + file_path.Replace(self.ExplorerPathLabel.Text, '');
+        self._server.ReceiveFile(file_path, finalPath);
         Inc(currentFile);
         progWin.SetProgress(currentFile, totalFiles);
       end;
+    end else begin
+      var fileName := GetTextLabel(item).Text;
+      self._server.ReceiveFile(
+        $'{self.ExplorerPathLabel.Text}{SLASH}{fileName}', 
+        $'{savePath}{SLASH}{fileName}'
+      );
+      Inc(currentFile);
+      progWin.SetProgress(currentFile, totalFiles);
     end;
-    
-    self.Enabled := true;
-    
-    progWin.Close();
-    progWin.Dispose(true);
-    
-    MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk)
   end;
-end;
-
-
-procedure MainWindow.ReceiveObject(fileName: string);
-begin
-  var saveDialog := new SaveFileDialog();
-      saveDialog.Filter := 'All files (*.*)|*.*';
-      saveDialog.Title := 'Сохранить файл как...';
-      saveDialog.FileName := fileName;
-      saveDialog.InitialDirectory := System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
-
-  if saveDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK then
-  begin
-    var savePath := saveDialog.FileName;
-    
-    self.Enabled := false;
-    
-    var progWin := new ProgressOverlay();
-        progWin.Location := new Point(
-          self.Left + (self.Width - progWin.Width) div 2,
-          self.Top + (self.Height - progWin.Height) div 2);
-        progWin.Show();
-    
-    if _server.ReceiveFile($'{self.ExplorerPathLabel.Text}{SLASH}{fileName}', savePath, progWin) then
-      MessageBox.Show('Файл успешно сохранен по пути: ' + savePath, 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Asterisk)
-    else
-      MessageBox.Show('Произошла ошибка при передаче файла!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Error);
-    
-    self.Enabled := true;
-    
-    progWin.Close();
-    progWin.Dispose();
-    
-  end else
-    MessageBox.Show('Сохранение отменено пользователем!', 'Передача файла', MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
   
+  self.Enabled := true;
+  
+  progWin.Close();
+  progWin.Dispose(true);
+  
+  MessageBox.Show('Выбранные файлы успешно сохранены по пути: ' + #13#10 + savePath, 'Передача завершена!', MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
 end;
+
 
 procedure MainWindow.__cut_MouseDown(sender: Object; e: MouseEventArgs);
 begin
@@ -623,7 +591,6 @@ end;
 procedure MainWindow.__delete_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   var items := explorer.GetSelectedItemsNames();
-  var msg: string;
   
   if MessageBox.Show(
       'Вы подтверждайте удаление всех выделенных объектов?',

@@ -10,10 +10,10 @@ var
   
   p: Process;
   /// Сюда записываются выводы всех комманд
-  output: string;
+  output, path: string;
   /// Список нестандартных команд для cmd (например, cd)
   CustomCommands: array of string = ['cd'];
-  CustomCommandTitle, path: string;
+  CustomCommandTitle: string;
 
 
 procedure init();
@@ -105,7 +105,7 @@ begin
   
 end;
 
-
+/// Передвижение по папкам
 procedure CD(command: string);
 begin
   if command = 'cd' then 
@@ -129,7 +129,7 @@ procedure MKDIR(dirName: string) := run($'mkdir {dirName}');
 /// Удаляет папку и все её содержимое
 procedure RMDIR(pathToDirectory: string);
 begin
-  run($'rmdir /s /q {pathToDirectory}', true, true);
+  run($'rmdir /s /q "{pathToDirectory}"', true, true);
 end;
 
 /// Перемещает каталог полностью с его содержимым

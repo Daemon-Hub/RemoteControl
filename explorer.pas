@@ -162,8 +162,8 @@ begin
     if items.Count <> 0 then
       items.Clear(); 
     
-    Println($'dirs: {dirs}');
-    Println($'files: {files}');
+//    Println($'dirs: {dirs}');
+//    Println($'files: {files}');
     
     // Dirs
     foreach var dirname in JsonConvert.DeserializeObject&<array of string>(dirs) do
@@ -285,7 +285,6 @@ begin
   foreach var item in selected_items do 
     res.Add(item.Panel2.Controls[0].Text);
   var Resu := JsonConvert.SerializeObject(res);
-  Println(resu);
   Result := Resu;
 end;
 

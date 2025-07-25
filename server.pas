@@ -127,9 +127,7 @@ type
     begin
       var fnd := self.Find(ip);
       if fnd <> nil then
-        self.RemoveClient(fnd)
-      else 
-        Writeln($'Клиент {ip} не найден');
+        self.RemoveClient(fnd);
     end;
     
     /// Ищет клиента среди подключённых по IP адресу
@@ -222,7 +220,7 @@ type
           {$omp parallel for}
           for id: byte := 0 to __connected_devices.Length - 1 do
           begin
-            var data: array of byte;
+            var data := new byte[4];
             try
               var stream := __connected_devices[id].client.GetStream();
               
@@ -230,13 +228,13 @@ type
               stream.Write(data, 0, 4);
               
               var responseStatus := stream.Read(data, 0, 4);
-              stream.Flush();
               
-              if (messageSending = false) and (responseStatus = 0) then
+              if Encoding.UTF8.GetString(data) <> 'PONG' then
                 self.RemoveClient(__connected_devices[id]);
               
             except
-              self.RemoveClient(__connected_devices[id]);
+              ErrorHandler('Не удалось проверить соединение!');
+              //self.RemoveClient(__connected_devices[id]);
             end;
           end;
           
@@ -265,22 +263,49 @@ type
       var message: string = msg;
       var buffer: array of byte;
       
-      SetLength(buffer, message.Length);
       buffer := Encoding.UTF8.GetBytes(message);
+      stream.Write(buffer, 0, buffer.Length);
       
-      var len: integer;
       try
-        stream.Write(buffer, 0, buffer.Length);
+        var sizeBuf := new byte[8];
+        var readCount := stream.Read(sizeBuf, 0, 8);
         
-        SetLength(buffer, selectClient.client.ReceiveBufferSize);
-        len := stream.Read(buffer, 0, buffer.Length);
-        message := Encoding.UTF8.GetString(buffer, 0, len);
+//        message := Encoding.UTF8.GetString(buffer, 0, readCount);     
+//        if message.StartsWith('R@') then
+//        begin
+//          ErrorHandler(message);
+//          self.messageSending := false; 
+//          exit(false);
+//        end;
+           
+        var messageLength := System.BitConverter.ToInt64(sizeBuf, 0);
+        
+        // Начало передачи файла //
+        var receivedBytes := 0;
+        var readBytes := 0;
+        var chunk := new byte[16384];
+        
+        var ms := new MemoryStream();
+        
+        while receivedBytes < messageLength do
+        begin  
+          var toRead := Min(chunk.Length, messageLength - receivedBytes);
+          readBytes := stream.Read(chunk, 0, toRead);
+          
+          if readBytes = 0 then break;
+          
+          ms.Write(chunk, 0, readBytes);
+          receivedBytes += readBytes;
+        end;
+        
+        message := Encoding.UTF8.GetString(ms.ToArray());
       except
         message := 'Произошла ошибка при передаче данных!';
         ErrorHandler(message);
       end;
       
       stream.Flush();
+      
       self.messageSending := false;
       Result := message;
     end;
@@ -293,8 +318,8 @@ type
       
       self.messageSending := true;
       
-      Println(fileName);
-      Println(savePath);
+//      Println(fileName);
+//      Println(savePath);
       
       var stream := self.selectedClient.client.GetStream();
       var FStream: FileStream;
@@ -311,16 +336,16 @@ type
       if message.StartsWith('R@') then
       begin
         ErrorHandler(message);
-        self.messageSending := false;
+        self.messageSending := false; 
         exit(false);
       end;
          
-      var fileSize := System.BitConverter.ToInt64(Buffer, 0);
+      var fileSize := System.BitConverter.ToInt64(buffer, 0);
       
       // Начало передачи файла //
       var receivedBytes := 0;
       var readBytes := 0;
-      var chunk := new byte[4096];
+      var chunk := new byte[16384];
 
       try
         FStream := SafeCreateFile(savePath);
@@ -350,8 +375,13 @@ type
       
       FStream.Close();
       
-      ReadExact(stream, chunk, 4);
-      var ReceiveEndCode := Encoding.UTF8.GetString(chunk, 0, 4);
+      var sizeBuf := new byte[8];
+      stream.Read(sizeBuf, 0, 8);
+      
+      var exit_code_size := System.BitConverter.ToInt64(sizeBuf, 0);
+          exit_code_size := stream.Read(buffer, 0, exit_code_size);
+      
+      var ReceiveEndCode := Encoding.UTF8.GetString(buffer, 0, exit_code_size);
       
       if (receivedBytes = fileSize) and (ReceiveEndCode = E_FILE_SUCCESSFULLY_TRANSFERRED) then
         Result := true 

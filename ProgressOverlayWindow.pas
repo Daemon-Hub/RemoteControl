@@ -48,7 +48,7 @@ procedure ProgressOverlay.SetProgress(current, total: integer);
 begin
   self.progress.Maximum := total;
   self.progress.Value := current;
-  self.label1.Text := $'Получено: {current} файлов';
+  self.label1.Text := $'Получено: {current}/{total} файлов';
   self.Update();
 end;
 
