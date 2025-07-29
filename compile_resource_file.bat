@@ -1,2 +1,2 @@
-﻿@echo off
-windres app.rc -o app.res
+﻿
+windres app.rc -o release.res

@@ -1,6 +1,7 @@
 ﻿unit server;
 
 uses 
+  System.Net.NetworkInformation,
   System.Threading.Tasks,
   System.Net.Sockets, 
   System.Threading,
@@ -36,6 +37,7 @@ type
       self._pp_service := new Thread(PPService);
     end;
     
+    
     /// Возобновляет работу сервера и всех его сервисов
     public procedure Resume();
     begin
@@ -62,11 +64,25 @@ type
     function GetIPAddrs(): string;
     begin
       var res: string = '';
-      foreach var addr in Dns.GetHostByName(Dns.GetHostName()).AddressList do
+      var adapters := NetworkInterface.GetAllNetworkInterfaces();
+      
+      foreach var adapter in adapters do
       begin
-        if addr.ToString() in ['172.19.0.1', '0.0.0.0'] then
+        if not(adapter.OperationalStatus = OperationalStatus.Up)then
           continue;
-        res += addr.ToString() + #10;
+        
+        if LowerCase(adapter.Description).Contains('hyper-v') or 
+           LowerCase(adapter.Description).Contains('loopback') then
+             continue;
+           
+        res += adapter.Name;
+        
+        var ipProps := adapter.GetIPProperties();
+        
+        foreach var ip in ipProps.UnicastAddresses do
+          if ip.Address.AddressFamily = AddressFamily.InterNetwork then
+            res += $': {ip.Address.ToString}{#10}';
+        
       end;
       Result := res;
     end;
@@ -227,14 +243,13 @@ type
               data := Encoding.UTF8.GetBytes('PING');
               stream.Write(data, 0, 4);
               
-              var responseStatus := stream.Read(data, 0, 4);
+              stream.Read(data, 0, 4);
               
               if Encoding.UTF8.GetString(data) <> 'PONG' then
                 self.RemoveClient(__connected_devices[id]);
               
             except
-              ErrorHandler('Не удалось проверить соединение!');
-              //self.RemoveClient(__connected_devices[id]);
+              self.RemoveClient(__connected_devices[id]);
             end;
           end;
           

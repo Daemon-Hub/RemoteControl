@@ -1,6 +1,7 @@
 #include <windows.h>
 
 APP_ICON ICON "icon.ico"
+HELPFILE RCDATA "static\manual\HowToUse.chm"
 
 LANGUAGE 0x0419, 0x0409
 

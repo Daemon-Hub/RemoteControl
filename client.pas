@@ -298,6 +298,24 @@ type
         end;{$endregion}
         E_GET_ALL_FILES_IN_FOLDER:
           responce := JsonConvert.SerializeObject(Directory.GetFiles(msg.Substring(4), '*', SearchOption.AllDirectories));
+        E_RENAME:
+        begin
+          var newName := msg.Substring(msg.LastIndexOf('#')+1);
+          var oldName := msg.Substring(4, msg.IndexOf('#')-4);
+          
+          var sourcePath := $'{self.epath}{SLASH}{oldName}';
+          var destPath :=  $'{self.epath}{SLASH}{newName}';
+          
+          try 
+            if Directory.Exists(sourcePath) then
+              Directory.Move(sourcePath, destPath) 
+            else 
+              &File.Move(sourcePath, destPath);
+            responce := 'Переименование прошло успешно';
+          except on e: Exception do
+            responce := E_ERROR_RENAME + e.Message;
+          end;
+        end;
       
       end; // case
 

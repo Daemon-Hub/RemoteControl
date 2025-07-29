@@ -14,7 +14,7 @@ uses
   Newtonsoft.Json;
 
 type
-  ApplicationState = (SERVER, CLIENT);
+  ApplicationState = (NULL, SERVER, CLIENT);
 
 
 type
@@ -43,6 +43,10 @@ type
     procedure __paste_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __delete_MouseDown(sender: Object; e: MouseEventArgs);
     procedure ExplorerHomeBtn_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure __rename_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure __rename_send_KeyDown(sender: Object; e: KeyEventArgs);
+    procedure ManualOpenBtn_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure label2_Click(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -51,12 +55,12 @@ type
     ServerTab: TabPage;
     ServerCreateButton: Button;
     ServerStartedInfo: &Label;
-    ClientConnectButton: Button;
+    clientConnectButton: Button;
     ClientIPMask: MaskedTextBox;
-    ClientConnectState: &Label;
+    clientConnectState: &Label;
     UIIconList: ImageList;
-    Components: System.ComponentModel.IContainer;
-    SplitContainer1: SplitContainer;
+    components: System.ComponentModel.IContainer;
+    splitContainer1: SplitContainer;
     ClientControlTab: TabControl;
     ConsoleTab: TabPage;
     ConsoleBox: TextBox;
@@ -66,7 +70,6 @@ type
     FilesIconList: ImageList;
     splitContainer2: SplitContainer;
     label2: &Label;
-    label1: &Label;
     ExplorerToolBar: ToolStrip;
     ExplorerToolBarButtonUp: ToolStripButton;
     ExplorerTabContextMenu: System.Windows.Forms.ContextMenuStrip;
@@ -85,7 +88,11 @@ type
     toolStripButton2: ToolStripButton;
     ExplorerHomeBtn: ToolStripButton;
     ExplorerPathLabel: ToolStripLabel;
-    ClientConnectingProgress: ProgressBar;
+    SettingsTab: TabPage;
+    ManualOpenBtn: Button;
+    CopyrightText: &Label;
+    ExplorerPanel: Panel;
+    clientConnectingProgress: ProgressBar;
     {$include UI.MainWindow.inc}
   {$endregion FormDesigner}
   public
@@ -103,6 +110,8 @@ type
     constructor;
     begin
       InitializeComponent;
+      self.DoubleBuffered := true;
+      self.ExplorerPanel.DoubleBuffered := true;
       _server_service := new Thread(ServerConnectionService);
       _server_service.Name := 'service';
       types.InitWinIcons();
@@ -131,6 +140,8 @@ begin
   
   if _server_is_working then begin
     
+    AppState := ApplicationState.NULL;
+    
     _server_service.Suspend();
     _server_is_working := false;
     _server.Stop();
@@ -139,7 +150,9 @@ begin
     
     ServerStartedInfo.Visible := false;
     
-    ServerCreateButton.Text := 'Запустить сервер';
+    ServerCreateButton.Text := ' '*5+ 'Запустить сервер';
+    ServerCreateButton.ImageKey := 'off.png';
+    ServerCreateButton.Size := new System.Drawing.Size(185, 38);
     
     ClientControlTab.Enabled := false;
     
@@ -157,10 +170,11 @@ begin
     end;
     
     ServerStartedInfo.Visible := true;
-    ServerStartedInfo.Text := 'Сервер успешно запущен' + #10*2;
-    ServerStartedInfo.Text += 'Достыпные IP компьютера:' + #10 + _server.ipv4.ToString();
+    ServerStartedInfo.Text := 'Достыпные IP-адреса компьютера:' + #10*2 + _server.ipv4.ToString();
     
-    ServerCreateButton.Text := 'Остановить';
+    ServerCreateButton.Text := ' '*5+ 'Остановить';
+    ServerCreateButton.ImageKey := 'on.png';
+    ServerCreateButton.Size := new System.Drawing.Size(140, 38);
     
     try
       _server_service.Start();
@@ -202,8 +216,10 @@ begin
         if _client.client = nil then begin
           ClientIPMask.Enabled := true;
           _client := nil;
+          AppState := ApplicationState.NULL;
         end else begin
-          clientConnectButton.Text := 'Отключиться';
+          clientConnectButton.Text := ' '*5+ 'Отключиться';
+          clientConnectButton.ImageKey := 'connected.png';
           AppState := ApplicationState.CLIENT;
           Thread.Create(procedure () -> ClientConnectionStateMonitoring).Start();
         end;
@@ -213,13 +229,17 @@ begin
   else begin
     ClientIPMask.Enabled := true;
     
-    clientConnectButton.Text := 'Подключиться';
+    clientConnectButton.Text := ' '*6+ 'Подключиться';
+    clientConnectButton.ImageKey := 'disconnected.png';
+    
     clientConnectState.Text := 'Не подключено';
     
     clientConnectingProgress.Value := 0;
     
     _client.Disconnect(); 
     _client := nil;
+    
+    AppState := ApplicationState.NULL;
   end;
   
 end;
@@ -233,12 +253,15 @@ begin
   
   ClientIPMask.Enabled := true;
   
-  clientConnectButton.Text := 'Подключиться';
+  clientConnectButton.Text := ' '*6+ 'Подключиться';
+  clientConnectButton.ImageKey := 'disconnected.png';
+  
   clientConnectState.Text := 'Не подключено';
   
   clientConnectingProgress.Value := 0;
   
   _client := nil;
+  AppState := ApplicationState.NULL;
   
   ErrorHandler('Сервер закрыл соединение!');
 end;
@@ -266,7 +289,7 @@ begin
           self.ClientControlTab.Enabled := true;
           self.OpenListOfConnectedDevices.Enabled := true;  
           
-          explorer.init(self.ExplorerTab, 
+          explorer.init(self.ExplorerPanel, 
                         self.FilesIconList, 
                         self.ExplorerToolBar, 
                         self.ExplorerDirectory_DoubleClick,
@@ -422,9 +445,10 @@ end;
 
 procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs);
 begin
+  if self._server_count_of_clients <= 0 then exit;
   if self.ExplorerPathLabel.Text = 'Главная' then
     explorer.UpdateHomePage(explorer.home_info, false) else  
-    explorer.Update(is_not_new_dir := true);
+    explorer.UpdateItemsLocation();
 end;
 
 
@@ -631,6 +655,55 @@ begin
   self.ExplorerPathLabel.Text := 'Главная';
   explorer.UpdateHomePage(explorer.home_info, false);
 end;
+
+
+procedure MainWindow.__rename_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  if selected_items.Count > 1 then
+    DeleteAllSelectedItemsExceptSelected(GetSplitContainer(selected_items[0]));
+  
+  var lbT := GetTextLabel(selected_items[0]);
+      lbT.Enabled := false;
+      lbT.Visible := false;
+  
+  var edit := new TextBox();
+      edit.MaximumSize := lbT.Parent.Size;
+      edit.Size := lbT.Size;
+      edit.Dock := DockStyle.Fill;
+      edit.Location := new Point(0, 0);
+      edit.Text := lbT.Text;
+      edit.Multiline := false;
+      edit.KeyDown += __rename_send_KeyDown;
+      edit.Focus();
+  
+  selected_items[0].Panel2.Controls.Add(edit);
+end;
+
+
+procedure MainWindow.__rename_send_KeyDown(sender: Object; e: KeyEventArgs);
+begin
+  if e.KeyCode = Keys.Enter then begin
+    e.Handled := true;
+    var newText := (sender as TextBox).Text;
+    var lbT := GetTextLabel(selected_items[0]); _server.MessageHandler(E_RENAME + lbT.Text + '#' + newText);
+        lbT.Text := newText;
+        lbT.Enabled := true;
+        lbT.Visible := true;
+    selected_items[0].Panel2.Controls.Clear();
+    selected_items[0].Panel2.Controls.Add(lbT);
+  end;
+end;
+
+procedure MainWindow.ManualOpenBtn_MouseDown(sender: Object; e: MouseEventArgs);
+begin
+  Execute(System.IO.Path.Combine(System.IO.Path.GetTempPath(), 'HowToUse.chm'));
+end;
+
+procedure MainWindow.label2_Click(sender: Object; e: EventArgs);
+begin
+  
+end;
+
 
 
 end.

@@ -30,10 +30,12 @@ const
   E_PASTE_ITEM = 'E@14';
   E_DELETE_ITEM = 'E@15';
   E_GET_ALL_FILES_IN_FOLDER = 'E@16';
+  E_RENAME = 'E@17';
   
   //  ERROR CODES  //
   E_ERROR_OPEN_FILE = 'R@20';
   E_ERROR_OPEN_FOLDER = 'R@21';
+  E_ERROR_RENAME = 'R@22';
 
 /// Инициализирует массив с необходимыми картинками для правильной работы окна с подключёнными устройствами
 procedure InitWinIcons();
@@ -41,7 +43,7 @@ procedure InitWinIcons();
 /// Преобразует строку в кодировке base64 в картинку и возвращает объект System.Drawing.Image
 function ImageFromBase64(base64: string): System.Drawing.Image;
 
-/// Удаляет вначале и в конце строки все chars
+/// Удаляет вначале и в конце строки str все chars или пробелы по умолчанию
 function Strip(str: string; chars: string := ' '): string;
 
 

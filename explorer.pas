@@ -33,7 +33,7 @@ var
   icon_list: ImageList;
   
   /// Основная область проводника
-  window: TabPage;
+  window: Panel;
   
   /// Строка с инструментами
   tool_bar: ToolStrip;
@@ -60,19 +60,23 @@ var
 
 
 /// Инициальизирует необходимые объекты для работы модуля
-procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
+procedure init(window: Panel; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
 
 /// Обновляет содержимое главной старницы проводника
 procedure UpdateHomePage(info: ExplorerInformation; is_new: boolean := true);
 
 /// Обновляет содержимое проводника               
-procedure Update(dirs: string := ''; files: string := ''; is_not_new_dir: boolean := false);
+procedure Update(dirs: string := ''; files: string := '');
 
 /// Обновляет окно проводника
 procedure UpdateWindow();
 
+/// Обновляет расположение каждого объекта
+procedure UpdateItemsLocation();
+
 /// Создаёт новый объект директория/файл
 function NewItem(filename: string; is_dir: boolean := false; special: string := nil): SplitContainer;
+function NewItem(filename: string; is_dir: boolean := false; special: string := nil): &Label;
 
 /// По расширению файла определяет нужную иконку и возвращает ключ для списка иконок
 function GetIconName(filename: string): string;
@@ -112,7 +116,7 @@ procedure Control_MouseLeave(sender: Object; e: EventArgs);
 
 implementation
 
-procedure init(window: TabPage; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
+procedure init(window: Panel; icon_list: ImageList; tool_bar: ToolStrip; double_click_event_handle: EventHandler; context_menu: ContextMenuStrip);
 begin
   explorer.window := window;
   explorer.icon_list := icon_list;
@@ -156,24 +160,21 @@ begin
   UpdateWindow();
 end;
 
-procedure Update(dirs, files: string; is_not_new_dir: boolean);
+procedure Update(dirs, files: string);
 begin
-  if not is_not_new_dir then begin
-    if items.Count <> 0 then
-      items.Clear(); 
-    
-//    Println($'dirs: {dirs}');
-//    Println($'files: {files}');
-    
-    // Dirs
-    foreach var dirname in JsonConvert.DeserializeObject&<array of string>(dirs) do
-      items.Add(NewItem(dirname.Substring(dirname.LastIndexOf('\') + 1), true));
-    
-    // Files
-    foreach var filename in JsonConvert.DeserializeObject&<array of string>(files) do
-      items.Add(NewItem(filename.Substring(filename.LastIndexOf('\') + 1)));
-    
-  end;
+  if items.Count <> 0 then
+    items.Clear(); 
+  
+//  Println($'dirs: {dirs}');
+//  Println($'files: {files}');
+  
+  // Dirs
+  foreach var dirname in JsonConvert.DeserializeObject&<array of string>(dirs) do
+    items.Add(NewItem(dirname.Substring(dirname.LastIndexOf('\') + 1), true));
+  
+  // Files
+  foreach var filename in JsonConvert.DeserializeObject&<array of string>(files) do
+    items.Add(NewItem(filename.Substring(filename.LastIndexOf('\') + 1)));
   
   UpdateWindow();
 end;
@@ -181,9 +182,10 @@ end;
 procedure UpdateWindow();
 begin
   window.Controls.Clear();
-  window.Controls.Add(tool_bar);
   
-  var (x, y) := (5, 30);
+  var (x, y) := (5, 5);
+  var space := 1;
+  
   foreach var obj in items.ToArray() do
   begin
     if x + obj.Width >= window.Width then begin
@@ -192,7 +194,23 @@ begin
     end;
     obj.Location := new Point(x, y);    
     window.Controls.Add(obj as Control);
-    x += obj.Width;
+    x += obj.Width + space;
+  end;
+end;
+
+procedure UpdateItemsLocation();
+begin
+  var (x, y) := (5, 5);
+  var space := 1;
+  
+  foreach obj: SplitContainer in window.Controls do
+  begin
+    if x + obj.Width >= window.Width then begin
+      x := 5;
+      y += obj.Height + 5
+    end;
+    obj.Location := new Point(x, y);    
+    x += obj.Width + space;
   end;
 end;
 
@@ -204,6 +222,30 @@ begin
     Result := 'file.png';
 end;
 
+function NewItem(filename: string; is_dir: boolean; special: string): &Label;
+begin
+  var ItemLabel := new &Label();
+      ItemLabel.AutoEllipsis := true;
+      ItemLabel.AutoSize := true;
+      ItemLabel.BackColor := System.Drawing.Color.Transparent;
+      ItemLabel.FlatStyle := System.Windows.Forms.FlatStyle.Flat;
+      ItemLabel.ImageAlign := System.Drawing.ContentAlignment.TopCenter;
+      ItemLabel.ImageKey := 'ini.png';
+      ItemLabel.ImageList := FilesIconList;
+      ItemLabel.Location := new System.Drawing.Point(373, 15);
+      ItemLabel.Margin := new System.Windows.Forms.Padding(3, 3, 3, 0);
+      ItemLabel.MaximumSize := new System.Drawing.Size(70, 100);
+      ItemLabel.Name := 'ItemLabel';
+      ItemLabel.Padding := new System.Windows.Forms.Padding(0, 0, 0, 3);
+      ItemLabel.Size := new System.Drawing.Size(66, 93);
+      ItemLabel.TabIndex := 1;
+      ItemLabel.Text := #13#10#13#10#13#10'файл.pngjd';
+      ItemLabel.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
+      ItemLabel.UseCompatibleTextRendering := true;
+      ItemLabel.MouseDown += Control_MouseDown;
+      ItemLabel.MouseMove += Control_MouseMove;
+      ItemLabel.MouseLeave += Control_MouseLeave;
+end;
 
 function NewItem(filename: string; is_dir: boolean; special: string): SplitContainer;
 begin
