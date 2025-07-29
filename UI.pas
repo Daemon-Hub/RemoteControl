@@ -29,8 +29,8 @@ type
     procedure ConsoleBox_MouseDown(sender: Object; e: MouseEventArgs);
     procedure UpdateCountOfClientsLabel();
     procedure cls(_t: string := '');
-    procedure ExplorerTab_Resize(sender: Object; e: EventArgs);
-    procedure ExplorerTab_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure ExplorerPanel_Resize(sender: Object; e: EventArgs);
+    procedure ExplorerPanel_MouseDown(sender: Object; e: MouseEventArgs);
     procedure ExplorerToolBarButtonUp_Click(sender: Object; e: EventArgs);
     procedure ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
     procedure __update_MouseDown(sender: Object; e: MouseEventArgs);
@@ -46,7 +46,6 @@ type
     procedure __rename_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __rename_send_KeyDown(sender: Object; e: KeyEventArgs);
     procedure ManualOpenBtn_MouseDown(sender: Object; e: MouseEventArgs);
-    procedure label2_Click(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -68,8 +67,7 @@ type
     CountOfClientsLabel: &Label;
     contextMenuStrip1: System.Windows.Forms.ContextMenuStrip;
     FilesIconList: ImageList;
-    splitContainer2: SplitContainer;
-    label2: &Label;
+    ItemLabel: &Label;
     ExplorerToolBar: ToolStrip;
     ExplorerToolBarButtonUp: ToolStripButton;
     ExplorerTabContextMenu: System.Windows.Forms.ContextMenuStrip;
@@ -170,7 +168,7 @@ begin
     end;
     
     ServerStartedInfo.Visible := true;
-    ServerStartedInfo.Text := 'Достыпные IP-адреса компьютера:' + #10*2 + _server.ipv4.ToString();
+    ServerStartedInfo.Text := 'Достыпные адаптеры:' + #10*2 + _server.ipv4.ToString();
     
     ServerCreateButton.Text := ' '*5+ 'Остановить';
     ServerCreateButton.ImageKey := 'on.png';
@@ -443,7 +441,7 @@ begin
 end;
 
 
-procedure MainWindow.ExplorerTab_Resize(sender: Object; e: EventArgs);
+procedure MainWindow.ExplorerPanel_Resize(sender: Object; e: EventArgs);
 begin
   if self._server_count_of_clients <= 0 then exit;
   if self.ExplorerPathLabel.Text = 'Главная' then
@@ -452,7 +450,7 @@ begin
 end;
 
 
-procedure MainWindow.ExplorerTab_MouseDown(sender: Object; e: MouseEventArgs);
+procedure MainWindow.ExplorerPanel_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   explorer.DeleteAllSelectedItems();
 end;
@@ -477,12 +475,12 @@ end;
 
 procedure MainWindow.ExplorerDirectory_DoubleClick(sender: Object; e: EventArgs);
 begin
-  var container := explorer.GetSplitContainer(sender);
+  var container := sender as &Label;
   var folder_name, response: string;
   
   explorer.DeleteAllSelectedItems();
   
-  folder_name := container.Panel2.Controls[0].Text;
+  folder_name := container.Text.Trim;
   if self.ExplorerPathLabel.Text = 'Главная' then begin
     if not(':\' in folder_name) then
       folder_name := explorer.home_info.GetItem(folder_name);
@@ -512,16 +510,17 @@ begin
   if self.ExplorerPathLabel.Text = 'Главная' then
     explorer.UpdateHomePage(_server.UpdateExInfo())
   else
-    explorer.Update(_server.MessageHandler(E_GET_DIRS), _server.MessageHandler(E_GET_FILES));
+    explorer.Update(_server.MessageHandler(E_GET_DIRS), 
+                    _server.MessageHandler(E_GET_FILES));
 end;                
 
 
 procedure MainWindow.__select_all_Click(sender: Object; e: EventArgs);
 begin
-  for var id := 0 to ExplorerTab.Controls.Count - 1 do
-    if ExplorerTab.Controls[id] is SplitContainer then begin
-      ExplorerTab.Controls[id].BackColor := explorer.selected_color;
-      selected_items.Add(ExplorerTab.Controls[id] as SplitContainer);
+  for var id := 0 to ExplorerPanel.Controls.Count - 1 do
+    if ExplorerPanel.Controls[id] is &Label then begin
+      ExplorerPanel.Controls[id].BackColor := explorer.selected_color;
+      selected_items.Add(ExplorerPanel.Controls[id] as &Label);
     end;  
 end;
 
@@ -549,10 +548,11 @@ begin
   var currentFile := 0;
   
   foreach var item in explorer.selected_items do begin
-    if GetImageLabel(item).ImageKey = 'dir.png' then begin
+    var fileName := item.Text.Trim;
+    if item.ImageKey = 'dir.png' then begin
       var response := JsonConvert.DeserializeObject&<array of string>(
         _server.MessageHandler(
-          E_GET_ALL_FILES_IN_FOLDER+$'{self.ExplorerPathLabel.Text}{SLASH}{GetTextLabel(item).Text}'
+          E_GET_ALL_FILES_IN_FOLDER+$'{self.ExplorerPathLabel.Text}{SLASH}{fileName}'
         )
       );
       totalFiles += response.Length - 1;
@@ -563,7 +563,6 @@ begin
         progWin.SetProgress(currentFile, totalFiles);
       end;
     end else begin
-      var fileName := GetTextLabel(item).Text;
       self._server.ReceiveFile(
         $'{self.ExplorerPathLabel.Text}{SLASH}{fileName}', 
         $'{savePath}{SLASH}{fileName}'
@@ -660,23 +659,24 @@ end;
 procedure MainWindow.__rename_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   if selected_items.Count > 1 then
-    DeleteAllSelectedItemsExceptSelected(GetSplitContainer(selected_items[0]));
+    DeleteAllSelectedItemsExceptSelected(selected_items[0]);
   
-  var lbT := GetTextLabel(selected_items[0]);
-      lbT.Enabled := false;
-      lbT.Visible := false;
+  var lbT := selected_items[0];
   
-  var edit := new TextBox();
-      edit.MaximumSize := lbT.Parent.Size;
-      edit.Size := lbT.Size;
-      edit.Dock := DockStyle.Fill;
-      edit.Location := new Point(0, 0);
-      edit.Text := lbT.Text;
-      edit.Multiline := false;
-      edit.KeyDown += __rename_send_KeyDown;
-      edit.Focus();
+  rename_field := new TextBox();
+  rename_field.MaximumSize := new System.Drawing.Size(lbT.Size.Width, lbT.Size.Height div 2 - 1);
+  rename_field.Size := new System.Drawing.Size(lbT.Size.Width, lbT.Size.Height div 2 - 1);
+  rename_field.Dock := DockStyle.None;
+  rename_field.Parent := lbT.Parent;
+  rename_field.Location := new Point(lbT.Location.X, lbT.Location.Y+50);
+  rename_field.Text := lbT.Text.Trim;
+  rename_field.TextAlign := HorizontalAlignment.Center;
+  rename_field.Multiline := true;
+  rename_field.KeyDown += __rename_send_KeyDown;
+  rename_field.Focus();
+  rename_field.BringToFront();
+  rename_field.SelectAll();
   
-  selected_items[0].Panel2.Controls.Add(edit);
 end;
 
 
@@ -684,24 +684,17 @@ procedure MainWindow.__rename_send_KeyDown(sender: Object; e: KeyEventArgs);
 begin
   if e.KeyCode = Keys.Enter then begin
     e.Handled := true;
-    var newText := (sender as TextBox).Text;
-    var lbT := GetTextLabel(selected_items[0]); _server.MessageHandler(E_RENAME + lbT.Text + '#' + newText);
-        lbT.Text := newText;
-        lbT.Enabled := true;
-        lbT.Visible := true;
-    selected_items[0].Panel2.Controls.Clear();
-    selected_items[0].Panel2.Controls.Add(lbT);
+    var newText := sender as TextBox;
+    var lbT := selected_items[0]; _server.MessageHandler(E_RENAME + lbT.Text.Trim + '#' + newText.Text);
+        lbT.Text := label_text_start+newText.Text;
+    ExplorerPanel.Controls.Remove(newText);
+    rename_field.Dispose();
   end;
 end;
 
 procedure MainWindow.ManualOpenBtn_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   Execute(System.IO.Path.Combine(System.IO.Path.GetTempPath(), 'HowToUse.chm'));
-end;
-
-procedure MainWindow.label2_Click(sender: Object; e: EventArgs);
-begin
-  
 end;
 
 

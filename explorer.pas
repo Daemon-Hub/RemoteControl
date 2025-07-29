@@ -18,10 +18,10 @@ var
   __initialized__: boolean = false;
   
   /// Содержит элементы рабочей директории
-  items: List<SplitContainer>;
+  items: List<&Label>;
   
   /// Содержит элементы которые были выделены нажатием
-  selected_items: List<SplitContainer>;
+  selected_items: List<&Label>;
   
   /// Цвет в который окрашивается объект при наведении на него мышки или клике
   selected_color: Color = Color.FromKnownColor(KnownColor.ActiveCaption);
@@ -57,6 +57,12 @@ var
   
   /// Содержит информацию о странице "Главная"
   home_info: ExplorerInformation;
+  
+  /// Необходимо добавлять в начало названия файла
+  label_text_start := #13#10#13#10#13#10;
+  
+  /// Переменная которая указывает на поле редактирующее название файла
+  rename_field: TextBox;
 
 
 /// Инициальизирует необходимые объекты для работы модуля
@@ -75,14 +81,10 @@ procedure UpdateWindow();
 procedure UpdateItemsLocation();
 
 /// Создаёт новый объект директория/файл
-function NewItem(filename: string; is_dir: boolean := false; special: string := nil): SplitContainer;
 function NewItem(filename: string; is_dir: boolean := false; special: string := nil): &Label;
 
 /// По расширению файла определяет нужную иконку и возвращает ключ для списка иконок
 function GetIconName(filename: string): string;
-
-/// Возвращает объект SplitContainer, который хранит obj
-function GetSplitContainer(obj: Object): SplitContainer;
 
 /// Возвращает названия выделенных папок и файлов в виде json строки 
 function GetSelectedItemsNames(): string;
@@ -91,13 +93,8 @@ function GetSelectedItemsNames(): string;
 procedure DeleteAllSelectedItems();
 
 /// Удаляет все выделенные объекты кроме одного (container)
-procedure DeleteAllSelectedItemsExceptSelected(container: SplitContainer);
+procedure DeleteAllSelectedItemsExceptSelected(container: &Label);
 
-/// Возвращает лабел с картинкой
-function GetImageLabel(obj: SplitContainer): &Label;
-
-/// Возвращает лабел с текстом
-function GetTextLabel(obj: SplitContainer): &Label;
 
 {$region EventHandlers}
 
@@ -124,12 +121,13 @@ begin
   explorer.Control_DoubleClick += double_click_event_handle;
   explorer.context_menu := context_menu;
   
-  items := new List<SplitContainer>(10);
-  selected_items := new List<SplitContainer>(10);
+  items := new List<&Label>(10);
+  selected_items := new List<&Label>(10);
   cut_or_copy_item_info := new PasteInformation();
   
   __initialized__ := true;
 end;
+
 
 procedure UpdateHomePage(info: ExplorerInformation; is_new: boolean);
 begin
@@ -160,6 +158,7 @@ begin
   UpdateWindow();
 end;
 
+
 procedure Update(dirs, files: string);
 begin
   if items.Count <> 0 then
@@ -179,18 +178,19 @@ begin
   UpdateWindow();
 end;
 
+
 procedure UpdateWindow();
 begin
   window.Controls.Clear();
   
   var (x, y) := (5, 5);
-  var space := 1;
+  var space := 5;
   
-  foreach var obj in items.ToArray() do
+  foreach obj: &Label in items.ToArray() do
   begin
     if x + obj.Width >= window.Width then begin
       x := 5;
-      y += obj.Height + 5
+      y += obj.Height + 5 + space;
     end;
     obj.Location := new Point(x, y);    
     window.Controls.Add(obj as Control);
@@ -198,21 +198,23 @@ begin
   end;
 end;
 
+
 procedure UpdateItemsLocation();
 begin
   var (x, y) := (5, 5);
-  var space := 1;
+  var space := 5;
   
-  foreach obj: SplitContainer in window.Controls do
+  foreach obj: &Label in window.Controls do
   begin
     if x + obj.Width >= window.Width then begin
       x := 5;
-      y += obj.Height + 5
+      y += obj.Height + 5 + space;
     end;
     obj.Location := new Point(x, y);    
     x += obj.Width + space;
   end;
 end;
+
 
 function GetIconName(filename: string): string;
 begin
@@ -222,102 +224,35 @@ begin
     Result := 'file.png';
 end;
 
+
 function NewItem(filename: string; is_dir: boolean; special: string): &Label;
 begin
   var ItemLabel := new &Label();
       ItemLabel.AutoEllipsis := true;
-      ItemLabel.AutoSize := true;
+      ItemLabel.AutoSize := false;
       ItemLabel.BackColor := System.Drawing.Color.Transparent;
       ItemLabel.FlatStyle := System.Windows.Forms.FlatStyle.Flat;
       ItemLabel.ImageAlign := System.Drawing.ContentAlignment.TopCenter;
-      ItemLabel.ImageKey := 'ini.png';
-      ItemLabel.ImageList := FilesIconList;
-      ItemLabel.Location := new System.Drawing.Point(373, 15);
+      if is_dir then begin
+        ItemLabel.DoubleClick += Control_DoubleClick;
+        ItemLabel.ImageKey := (special <> nil ? special : 'dir') +'.png';
+      end else 
+        ItemLabel.ImageKey := GetIconName(filename);
+      ItemLabel.ImageList := icon_list;
       ItemLabel.Margin := new System.Windows.Forms.Padding(3, 3, 3, 0);
-      ItemLabel.MaximumSize := new System.Drawing.Size(70, 100);
-      ItemLabel.Name := 'ItemLabel';
+      ItemLabel.MaximumSize := new System.Drawing.Size(80, 0);
+      ItemLabel.MinimumSize := new System.Drawing.Size(80, 100);
+      ItemLabel.Size := new System.Drawing.Size(80, 100);
       ItemLabel.Padding := new System.Windows.Forms.Padding(0, 0, 0, 3);
-      ItemLabel.Size := new System.Drawing.Size(66, 93);
-      ItemLabel.TabIndex := 1;
-      ItemLabel.Text := #13#10#13#10#13#10'файл.pngjd';
+      ItemLabel.Text := (filename.Length > 6 ? label_text_start: label_text_start[1:5]) + filename;
       ItemLabel.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
       ItemLabel.UseCompatibleTextRendering := true;
       ItemLabel.MouseDown += Control_MouseDown;
       ItemLabel.MouseMove += Control_MouseMove;
       ItemLabel.MouseLeave += Control_MouseLeave;
-end;
-
-function NewItem(filename: string; is_dir: boolean; special: string): SplitContainer;
-begin
-  var item_template: SplitContainer = new SplitContainer();
-  item_template.Orientation := Orientation.Horizontal;
-  item_template.Size := new Size(100, 110);
-  item_template.Panel1.Size := new Size(100, 60);
-  item_template.Panel2.Size := new Size(100, 50);
-  item_template.IsSplitterFixed := true;
-  item_template.BackColor := unselected_color;
-  item_template.TabIndex := 1;
-  item_template.MouseDown += Control_MouseDown;
-  item_template.MouseMove += Control_MouseMove;
-  item_template.MouseLeave += Control_MouseLeave;
-    
-  var (label1, label2) := (new &Label(), new &Label());
-  
-  // ---------------- Icon ---------------- //
-  item_template.Panel1.Controls.Add(label1);
-  
-  label1.Dock := DockStyle.Fill;
-  label1.ImageList := icon_list;
-  if is_dir then begin
-    label1.ImageKey := (special <> nil ? special : 'dir') +'.png';
-  end else 
-    label1.ImageKey := GetIconName(filename);
-  label1.Location := new Point(0, 0);
-  label1.Size := new Size(100, 60);
-  label1.MaximumSize := new Size(100, 60);
-  label1.TabIndex := 0;
-  label1.ImageAlign := ContentAlignment.TopCenter;
-  label1.MouseDown += Control_MouseDown;
-  label1.MouseMove += Control_MouseMove;
-  label1.MouseLeave += Control_MouseLeave;
-    
-  // ---------------- Filename ---------------- //
-  item_template.Panel2.Controls.Add(label2);
-  
-  label2.Dock := DockStyle.Fill;
-  label2.Location := new Point(0, 0);
-  label2.Size := new Size(100, 50);
-  label2.MaximumSize := new Size(100, 0);
-  label2.TabIndex := 0;
-  label2.Text := filename;
-  label2.TextAlign := ContentAlignment.TopCenter;
-  label2.AutoEllipsis := true;
-  label2.MouseDown += Control_MouseDown;
-  label2.MouseMove += Control_MouseMove;
-  label2.MouseLeave += Control_MouseLeave;
-  
-  if special = nil then begin
-    item_template.ContextMenuStrip := explorer.context_menu;
-    label1.ContextMenuStrip := explorer.context_menu;
-    label2.ContextMenuStrip := explorer.context_menu;
-  end; 
-  
-  if is_dir then begin
-    item_template.DoubleClick += Control_DoubleClick;
-    label1.DoubleClick += Control_DoubleClick;
-    label2.DoubleClick += Control_DoubleClick;
-  end;
-  
-  Result := item_template;
-end;
-
-
-function GetSplitContainer(obj: Object): SplitContainer;
-begin
-  var ctrl: Control = obj as Control;
-  while not (ctrl is SplitContainer) do 
-    ctrl := ctrl.Parent;
-  Result := ctrl as SplitContainer;
+  if special = nil then 
+    ItemLabel.ContextMenuStrip := explorer.context_menu;
+  Result := ItemLabel;
 end;
 
 
@@ -325,9 +260,8 @@ function GetSelectedItemsNames(): string;
 begin
   var res := new List<string>();
   foreach var item in selected_items do 
-    res.Add(item.Panel2.Controls[0].Text);
-  var Resu := JsonConvert.SerializeObject(res);
-  Result := Resu;
+    res.Add(item.Text.Trim);
+  Result := JsonConvert.SerializeObject(res);
 end;
 
 
@@ -341,30 +275,31 @@ begin
 end;
 
 
-procedure DeleteAllSelectedItemsExceptSelected(container: SplitContainer);
+procedure DeleteAllSelectedItemsExceptSelected(container: &Label);
 begin
   var length: integer = selected_items.Count;
   if length >= 2 then begin
     for var id := length - 1 downto 1 do
     begin
       selected_items[id].BackColor := unselected_color;
+      selected_items[id].AutoSize := false;
+      selected_items[id].Size := selected_items[id].MinimumSize;
       selected_items.RemoveAt(id);
     end;
   end;
   selected_items[0].BackColor := unselected_color;
+  selected_items[0].AutoSize := false;
   selected_items[0] := container;
+  selected_items[0].AutoSize := true;
 end;
 
-function GetImageLabel(obj: SplitContainer): &Label := obj.Panel1.Controls[0] as &Label;
-
-function GetTextLabel(obj: SplitContainer): &Label := obj.Panel2.Controls[0] as &Label;
 
 {$region EventHandlers}
 
 procedure Control_MouseDown(sender: Object; e: MouseEventArgs);
 begin
-  var container: SplitContainer = GetSplitContainer(sender);
-  container.BackColor := selected_color;
+  var container := sender as &Label;
+      container.BackColor := selected_color;
   
   if e.Button = MouseButtons.Right then begin
     if selected_items.Count = 0 then
@@ -382,19 +317,20 @@ begin
     end else 
       DeleteAllSelectedItemsExceptSelected(container);
   end;
+  
+  try rename_field.Dispose(); except end;
 end;
 
 
 procedure Control_MouseMove(sender: Object; e: MouseEventArgs);
 begin
-  var container: SplitContainer = GetSplitContainer(sender);
-  container.BackColor := selected_color; 
+  (sender as &Label).BackColor := selected_color; 
 end;
 
 
 procedure Control_MouseLeave(sender: Object; e: EventArgs);
 begin
-  var container: SplitContainer = GetSplitContainer(sender);
+  var container := sender as &Label;
   if not selected_items.Contains(container) then
     container.BackColor := unselected_color;
 end;

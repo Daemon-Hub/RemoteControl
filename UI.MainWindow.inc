@@ -27,7 +27,6 @@ procedure InitializeComponent;
         self.ExplorerPanel := new System.Windows.Forms.Panel();
         self.ItemLabel := new System.Windows.Forms.Label();
         self.FilesIconList := new System.Windows.Forms.ImageList(self.components);
-        self.splitContainer2 := new System.Windows.Forms.SplitContainer();
         self.ExplorerToolBar := new System.Windows.Forms.ToolStrip();
         self.ExplorerHomeBtn := new System.Windows.Forms.ToolStripButton();
         self.ExplorerToolBarButtonUp := new System.Windows.Forms.ToolStripButton();
@@ -56,8 +55,6 @@ procedure InitializeComponent;
         self.ExplorerTab.SuspendLayout();
         self.ExplorerTabContextMenu.SuspendLayout();
         self.ExplorerPanel.SuspendLayout();
-        (System.ComponentModel.ISupportInitialize(self.splitContainer2)).BeginInit();
-        self.splitContainer2.SuspendLayout();
         self.ExplorerToolBar.SuspendLayout();
         self.SettingsTab.SuspendLayout();
         self.ExplorerItemContextMenu.SuspendLayout();
@@ -242,11 +239,10 @@ procedure InitializeComponent;
         // 
         self.ServerStartedInfo.AutoEllipsis := true;
         self.ServerStartedInfo.AutoSize := true;
-        self.ServerStartedInfo.BorderStyle := System.Windows.Forms.BorderStyle.Fixed3D;
         self.ServerStartedInfo.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold);
         self.ServerStartedInfo.Location := new System.Drawing.Point(169, 6);
         self.ServerStartedInfo.Name := 'ServerStartedInfo';
-        self.ServerStartedInfo.Size := new System.Drawing.Size(209, 25);
+        self.ServerStartedInfo.Size := new System.Drawing.Size(207, 22);
         self.ServerStartedInfo.TabIndex := 1;
         self.ServerStartedInfo.Text := 'Сервер успешно запущен'#13#10;
         self.ServerStartedInfo.UseCompatibleTextRendering := true;
@@ -342,8 +338,6 @@ procedure InitializeComponent;
         self.ExplorerTab.Size := new System.Drawing.Size(862, 218);
         self.ExplorerTab.TabIndex := 1;
         self.ExplorerTab.Text := 'Проводник';
-        self.ExplorerTab.MouseDown += ExplorerTab_MouseDown;
-        self.ExplorerTab.Resize += ExplorerTab_Resize;
         // 
         // ExplorerTabContextMenu
         // 
@@ -383,12 +377,13 @@ procedure InitializeComponent;
         // 
         self.ExplorerPanel.AutoScroll := true;
         self.ExplorerPanel.Controls.Add(self.ItemLabel);
-        self.ExplorerPanel.Controls.Add(self.splitContainer2);
         self.ExplorerPanel.Dock := System.Windows.Forms.DockStyle.Fill;
         self.ExplorerPanel.Location := new System.Drawing.Point(3, 28);
         self.ExplorerPanel.Name := 'ExplorerPanel';
         self.ExplorerPanel.Size := new System.Drawing.Size(852, 183);
         self.ExplorerPanel.TabIndex := 2;
+        self.ExplorerPanel.MouseDown += ExplorerPanel_MouseDown;
+        self.ExplorerPanel.Resize += ExplorerPanel_Resize;
         // 
         // ItemLabel
         // 
@@ -399,7 +394,7 @@ procedure InitializeComponent;
         self.ItemLabel.ImageAlign := System.Drawing.ContentAlignment.TopCenter;
         self.ItemLabel.ImageKey := 'ini.png';
         self.ItemLabel.ImageList := self.FilesIconList;
-        self.ItemLabel.Location := new System.Drawing.Point(373, 15);
+        self.ItemLabel.Location := new System.Drawing.Point(434, 22);
         self.ItemLabel.Margin := new System.Windows.Forms.Padding(3, 3, 3, 0);
         self.ItemLabel.MaximumSize := new System.Drawing.Size(70, 100);
         self.ItemLabel.Name := 'ItemLabel';
@@ -409,7 +404,6 @@ procedure InitializeComponent;
         self.ItemLabel.Text := #13#10#13#10#13#10'файл.pngjd';
         self.ItemLabel.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
         self.ItemLabel.UseCompatibleTextRendering := true;
-        self.ItemLabel.Click += label2_Click;
         // 
         // FilesIconList
         // 
@@ -468,25 +462,6 @@ procedure InitializeComponent;
         self.FilesIconList.Images.SetKeyName(50, 'drive.png');
         self.FilesIconList.Images.SetKeyName(51, 'network-drive.png');
         self.FilesIconList.Images.SetKeyName(52, 'usb-flash-drive.png');
-        // 
-        // splitContainer2
-        // 
-        self.splitContainer2.BackColor := System.Drawing.Color.Transparent;
-        self.splitContainer2.Location := new System.Drawing.Point(267, 15);
-        self.splitContainer2.Name := 'splitContainer2';
-        self.splitContainer2.Orientation := System.Windows.Forms.Orientation.Horizontal;
-        // 
-        // splitContainer2.Panel1
-        // 
-        self.splitContainer2.Panel1.RightToLeft := System.Windows.Forms.RightToLeft.No;
-        // 
-        // splitContainer2.Panel2
-        // 
-        self.splitContainer2.Panel2.RightToLeft := System.Windows.Forms.RightToLeft.No;
-        self.splitContainer2.Panel2MinSize := 50;
-        self.splitContainer2.Size := new System.Drawing.Size(100, 100);
-        self.splitContainer2.SplitterDistance := 46;
-        self.splitContainer2.TabIndex := 1;
         // 
         // ExplorerToolBar
         // 
@@ -686,8 +661,6 @@ procedure InitializeComponent;
         self.ExplorerTabContextMenu.ResumeLayout(false);
         self.ExplorerPanel.ResumeLayout(false);
         self.ExplorerPanel.PerformLayout();
-        (System.ComponentModel.ISupportInitialize(self.splitContainer2)).EndInit();
-        self.splitContainer2.ResumeLayout(false);
         self.ExplorerToolBar.ResumeLayout(false);
         self.ExplorerToolBar.PerformLayout();
         self.SettingsTab.ResumeLayout(false);
