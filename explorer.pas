@@ -39,12 +39,14 @@ var
   tool_bar: ToolStrip;
   
   /// Поддерживаемые типы файлов
-  filetypes: set of string = ['dll', 'doc', 'exe', 'html', 'ini', 'iso', 'jpg',
-  'mp3', 'obj', 'pdf', 'txt', 'wav', 'xls', 'xml', 
-  'zip', 'pas', 'docx', 'htm', 'xlsx', 'pabcproj',
-  'asp', 'avi', 'bat', 'cmd', 'com', 'csv', 'gif',
-  'jar', 'js', 'jsx', 'mp4', 'nfo', 'otf', 'pkg', 
-  'png', 'wmv', 'ppt', 'pptx', 'rtf', 'ico'];
+  filetypes: set of string = [
+  'accdb','asp','avi','bak','bat','bin','blend','c++','c','class','cmd','com',
+  'cpp','cs','css','csv','cxx','dat','db','dir','dll','doc','dockerfile','docx',
+  'exe','file','gd','gif','go','gradle','h++','h','hpp','htm','html','hxx','ico',
+  'ini','io','ipynb','iso','jar','java','jpg','js','json','jsx','kt','lnk','lua',
+  'mp3','mp4','nfo','obj','otf','pabcproj','pak','pas','pdb','pdf','php','pkg',
+  'png','ppt','pptx','prettierrc','ps1','py','rs','rtf','scss','sln','ts','txt',
+  'vim','vite','vsix','vue','wav','wmv','xls','xlsx','xml','zip'];
   
   /// На элемент нажали два раза подряд
   Control_DoubleClick: EventHandler;
@@ -63,6 +65,9 @@ var
   
   /// Переменная которая указывает на поле редактирующее название файла
   rename_field: TextBox;
+  
+  /// Переменная которая указывает на поле редактирующее название пути
+  rename_path: ToolStripTextBox;
 
 
 /// Инициальизирует необходимые объекты для работы модуля
@@ -188,7 +193,7 @@ begin
   
   foreach obj: &Label in items.ToArray() do
   begin
-    if x + obj.Width >= window.Width then begin
+    if x + obj.Width >= window.Width-16 then begin
       x := 5;
       y += obj.Height + 5 + space;
     end;
@@ -206,7 +211,7 @@ begin
   
   foreach obj: &Label in window.Controls do
   begin
-    if x + obj.Width >= window.Width then begin
+    if x + obj.Width >= window.Width-16 then begin
       x := 5;
       y += obj.Height + 5 + space;
     end;
@@ -270,6 +275,8 @@ begin
   for var id := selected_items.Count - 1 downto 0 do
   begin
     selected_items[id].BackColor := unselected_color;
+    selected_items[id].AutoSize := false;
+    selected_items[id].Size := selected_items[id].MinimumSize;
     selected_items.RemoveAt(id);
   end;
 end;
@@ -277,19 +284,9 @@ end;
 
 procedure DeleteAllSelectedItemsExceptSelected(container: &Label);
 begin
-  var length: integer = selected_items.Count;
-  if length >= 2 then begin
-    for var id := length - 1 downto 1 do
-    begin
-      selected_items[id].BackColor := unselected_color;
-      selected_items[id].AutoSize := false;
-      selected_items[id].Size := selected_items[id].MinimumSize;
-      selected_items.RemoveAt(id);
-    end;
-  end;
-  selected_items[0].BackColor := unselected_color;
-  selected_items[0].AutoSize := false;
-  selected_items[0] := container;
+  if selected_items.Count >= 1 then 
+    DeleteAllSelectedItems();
+  selected_items.Add(container);
   selected_items[0].AutoSize := true;
 end;
 

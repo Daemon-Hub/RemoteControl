@@ -31,11 +31,13 @@ const
   E_DELETE_ITEM = 'E@15';
   E_GET_ALL_FILES_IN_FOLDER = 'E@16';
   E_RENAME = 'E@17';
+  E_RENAME_PATH = 'E@18';
   
   //  ERROR CODES  //
   E_ERROR_OPEN_FILE = 'R@20';
   E_ERROR_OPEN_FOLDER = 'R@21';
   E_ERROR_RENAME = 'R@22';
+  E_ERROR_RENAME_PATH = 'R@23';
 
 /// Инициализирует массив с необходимыми картинками для правильной работы окна с подключёнными устройствами
 procedure InitWinIcons();
@@ -63,6 +65,7 @@ type
     end;
     
     function GetSpecialFolders() := [Desktop, Downloads, Music, Pictures, Documents, User];
+    
     function GetItem(key: string): string;
     begin
       case key of

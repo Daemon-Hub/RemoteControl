@@ -9,7 +9,8 @@ uses
   System.Threading.Tasks,
   System.Windows.Forms,  
   explorer, server, client, types,
-  Notifications, ProgressOverlayWindow,
+  Notifications, 
+  ProgressOverlayWindow,
   ListOfConnectedDevices,
   Newtonsoft.Json;
 
@@ -46,6 +47,11 @@ type
     procedure __rename_MouseDown(sender: Object; e: MouseEventArgs);
     procedure __rename_send_KeyDown(sender: Object; e: KeyEventArgs);
     procedure ManualOpenBtn_MouseDown(sender: Object; e: MouseEventArgs);
+    procedure ExplorerPathLabel_DoubleClick(sender: Object; e: EventArgs);
+    procedure ExplorerToolBar_Resize(sender: Object; e: EventArgs);
+    procedure EditPathText_KeyDown(sender: Object; e: KeyEventArgs);
+    procedure EditPathText_LostFocus(sender: Object; e: EventArgs);
+    procedure ItemLabel_Leave(sender: Object; e: EventArgs);
   {$region FormDesigner}
   internal
     {$resource UI.MainWindow.resources}
@@ -83,7 +89,7 @@ type
     ExplorerItemsUpdateButton: ToolStripButton;
     __delete: ToolStripMenuItem;
     SelectAllItems: ToolStripButton;
-    toolStripButton2: ToolStripButton;
+    PasteSelectedBtn: ToolStripButton;
     ExplorerHomeBtn: ToolStripButton;
     ExplorerPathLabel: ToolStripLabel;
     SettingsTab: TabPage;
@@ -98,6 +104,7 @@ type
     _server_is_working: boolean;
     _server_count_of_clients: integer;
     _server_service: Thread;
+    clientsNumberChangedEvent: AutoResetEvent;
     
     _client: TClient;
     
@@ -110,8 +117,9 @@ type
       InitializeComponent;
       self.DoubleBuffered := true;
       self.ExplorerPanel.DoubleBuffered := true;
-      _server_service := new Thread(ServerConnectionService);
-      _server_service.Name := 'service';
+      self._server_service := new Thread(ServerConnectionService);
+      self._server_service.Name := 'service';
+      self.clientsNumberChangedEvent := new AutoResetEvent(false);
       types.InitWinIcons();
     end;
   end;
@@ -163,12 +171,12 @@ begin
     _server_is_working := true;
     
     if _server = nil then begin
-      _server := new TcpServer();
+      _server := new TcpServer(self.clientsNumberChangedEvent);
       _server.Start();
     end;
     
     ServerStartedInfo.Visible := true;
-    ServerStartedInfo.Text := 'Достыпные адаптеры:' + #10*2 + _server.ipv4.ToString();
+    ServerStartedInfo.Text := 'Доступные адаптеры:' + #10*2 + _server.ipv4.ToString();
     
     ServerCreateButton.Text := ' '*5+ 'Остановить';
     ServerCreateButton.ImageKey := 'on.png';
@@ -191,7 +199,7 @@ begin
   if (_server_is_working) then exit;
   
   if _client = nil then begin
-    var serverIP: string = '172.29.80.1';//ClientIPMask.Text.Replace(' ', '');
+    var serverIP: string = ClientIPMask.Text.Replace(' ', '');
     
     _client := new TClient(serverIP);
     _client.Connect();
@@ -276,39 +284,40 @@ procedure MainWindow.ServerConnectionService();
 begin
   while _server_is_working do
   begin
-    if _server.CountOfClients <> _server_count_of_clients then begin
+    
+    self.clientsNumberChangedEvent.WaitOne(); 
+    if not _server_is_working then break;
       
-      // Используем Invoke для безопасного доступа к UI-элементам
-      self.Invoke(
-        procedure () -> begin
-        if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then begin
-          Thread.Sleep(100);
-          
-          self.ClientControlTab.Enabled := true;
-          self.OpenListOfConnectedDevices.Enabled := true;  
-          
-          explorer.init(self.ExplorerPanel, 
-                        self.FilesIconList, 
-                        self.ExplorerToolBar, 
-                        self.ExplorerDirectory_DoubleClick,
-                        self.ExplorerItemContextMenu);
-          
-          self.UpdateSelectedDevice(_server.head);
-          
-          ErrorHandler($'{_server.selectedClient.WinInfo.ComputerName} подключился{#13}IP:{_server.selectedClient.ip}'); 
-        end 
-        else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then begin
-          cls();
-          self.ClientControlTab.Enabled := false;
-          self.OpenListOfConnectedDevices.Enabled := false; 
-          _server.selectedClient := nil;
-        end;
+    self.Invoke(
+      procedure () -> begin
+      if (_server_count_of_clients < _server.CountOfClients) then
+        ErrorHandler($'{_server.tail.WinInfo.ComputerName} подключился{#13}IP:{_server.tail.ip}');
+      if (_server_count_of_clients = 0) and (_server.CountOfClients > 0) then begin
+        Thread.Sleep(100);
         
-      end);
-      _server_count_of_clients := _server.CountOfClients;
-      self.UpdateCountOfClientsLabel();
+        self.ClientControlTab.Enabled := true;
+        self.OpenListOfConnectedDevices.Enabled := true;  
+        
+        explorer.init(self.ExplorerPanel, 
+                      self.FilesIconList, 
+                      self.ExplorerToolBar, 
+                      self.ExplorerDirectory_DoubleClick,
+                      self.ExplorerItemContextMenu);
+        
+        self.UpdateSelectedDevice(_server.head); 
+      end 
+      else if (_server_count_of_clients > 0) and (_server.CountOfClients = 0) then begin
+        cls();
+        self.ClientControlTab.Enabled := false;
+        self.OpenListOfConnectedDevices.Enabled := false; 
+        _server.selectedClient := nil;
+      end;
       
-    end;
+    end);
+      
+    _server_count_of_clients := _server.CountOfClients;
+    self.UpdateCountOfClientsLabel();
+
   end; // while
   
 end;
@@ -339,7 +348,7 @@ begin
   );
 end;
 
-/// Очищает консольное окно
+
 procedure MainWindow.cls(_t: string) := ConsoleBox.Text := _t;
 
 
@@ -400,7 +409,7 @@ begin
   
   {$endregion Options}
   // -------------------------- Enter Pressed -------------------------- //
-  Println(ConsoleBox.Text.Length);
+  // Println(ConsoleBox.Text.Length);
   if e.KeyCode <> Keys.Enter then exit;
   
   e.SuppressKeyPress := true; 
@@ -600,7 +609,8 @@ end;
 procedure MainWindow.__paste_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   if (explorer.cut_or_copy_item_info.Code = nil) or
-     (explorer.cut_or_copy_item_info.TakeFrom = nil) then exit;
+     (explorer.cut_or_copy_item_info.TakeFrom = nil) or 
+     (self.ExplorerPathLabel.Text = 'Главная') then exit;
   
   explorer.cut_or_copy_item_info.DestinationPath := self.ExplorerPathLabel.Text;
   var request: string = JsonConvert.SerializeObject(explorer.cut_or_copy_item_info);
@@ -692,9 +702,72 @@ begin
   end;
 end;
 
+
 procedure MainWindow.ManualOpenBtn_MouseDown(sender: Object; e: MouseEventArgs);
 begin
   Execute(System.IO.Path.Combine(System.IO.Path.GetTempPath(), 'HowToUse.chm'));
+end;
+
+
+procedure MainWindow.ExplorerPathLabel_DoubleClick(sender: Object; e: EventArgs);
+begin
+  var lbT := sender as ToolStripLabel;
+      lbT.Enabled := false;
+      lbT.Visible := false;
+  
+  rename_path := new ToolStripTextBox;
+  rename_path.Size := lbT.Size;
+  rename_path.Overflow := lbT.Overflow;
+  rename_path.Text := lbT.Text;
+  rename_path.TextAlign := lbT.TextAlign;
+  rename_path.Multiline := false;
+  rename_path.KeyDown += EditPathText_KeyDown;
+  rename_path.LostFocus += EditPathText_LostFocus;
+  rename_path.Focus();
+  rename_path.SelectAll();
+  
+  self.ExplorerToolBar.Items.Add(rename_path);
+end;
+
+
+procedure MainWindow.EditPathText_KeyDown(sender: Object; e: KeyEventArgs);
+begin
+  if e.KeyCode = Keys.Enter then begin
+    e.Handled := true;
+    var newText := sender as ToolStripTextBox;
+    if (newText.Text <> '') and (newText.Text <> 'Главная') then begin
+      if _server.MessageHandler(E_RENAME_PATH + newText.Text) = E_ERROR_RENAME_PATH then 
+        MessageBox.Show('Ошибка в пути! Такой директории не существует!', 'Изменение пути', MessageBoxButtons.OK, MessageBoxIcon.Error)
+      else 
+        self.ExplorerPathLabel.Text := newText.Text.Trim(' ', #10, SLASH);
+    end else 
+      self.ExplorerPathLabel.Text := 'Главная';
+    self.ExplorerPathLabel.Enabled := true;
+    self.ExplorerPathLabel.Visible := true;
+    self.__update_MouseDown(self.__update, new MouseEventArgs(System.Windows.Forms.MouseButtons.Left,0,0,0,0));
+    self.ExplorerToolBar.Items.Remove(rename_path);
+    rename_path.Dispose();
+  end;
+end;
+
+
+procedure MainWindow.EditPathText_LostFocus(sender: Object; e: EventArgs);
+begin
+  self.ExplorerPathLabel.Enabled := true;
+  self.ExplorerPathLabel.Visible := true;
+  self.ExplorerToolBar.Items.Remove(rename_path);
+  rename_path.Dispose();
+end;
+
+
+procedure MainWindow.ExplorerToolBar_Resize(sender: Object; e: EventArgs);
+begin
+  self.ExplorerPathLabel.Width := (sender as ToolStrip).Width - 150;
+end;
+
+procedure MainWindow.ItemLabel_Leave(sender: Object; e: EventArgs);
+begin
+  
 end;
 
 

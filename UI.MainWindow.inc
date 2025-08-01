@@ -33,7 +33,7 @@ procedure InitializeComponent;
         self.ExplorerPathLabel := new System.Windows.Forms.ToolStripLabel();
         self.ExplorerItemsUpdateButton := new System.Windows.Forms.ToolStripButton();
         self.SelectAllItems := new System.Windows.Forms.ToolStripButton();
-        self.toolStripButton2 := new System.Windows.Forms.ToolStripButton();
+        self.PasteSelectedBtn := new System.Windows.Forms.ToolStripButton();
         self.SettingsTab := new System.Windows.Forms.TabPage();
         self.ManualOpenBtn := new System.Windows.Forms.Button();
         self.CopyrightText := new System.Windows.Forms.Label();
@@ -73,7 +73,7 @@ procedure InitializeComponent;
         self.DefaultTab.Location := new System.Drawing.Point(0, 0);
         self.DefaultTab.Name := 'DefaultTab';
         self.DefaultTab.SelectedIndex := 0;
-        self.DefaultTab.Size := new System.Drawing.Size(884, 561);
+        self.DefaultTab.Size := new System.Drawing.Size(899, 561);
         self.DefaultTab.SizeMode := System.Windows.Forms.TabSizeMode.FillToRight;
         self.DefaultTab.TabIndex := 0;
         // 
@@ -90,7 +90,7 @@ procedure InitializeComponent;
         self.ClientTab.Location := new System.Drawing.Point(4, 32);
         self.ClientTab.Name := 'ClientTab';
         self.ClientTab.Padding := new System.Windows.Forms.Padding(3);
-        self.ClientTab.Size := new System.Drawing.Size(854, 441);
+        self.ClientTab.Size := new System.Drawing.Size(876, 525);
         self.ClientTab.TabIndex := 0;
         self.ClientTab.Text := 'Клиент';
         // 
@@ -176,7 +176,7 @@ procedure InitializeComponent;
         self.ServerTab.Location := new System.Drawing.Point(4, 32);
         self.ServerTab.Name := 'ServerTab';
         self.ServerTab.Padding := new System.Windows.Forms.Padding(3);
-        self.ServerTab.Size := new System.Drawing.Size(876, 525);
+        self.ServerTab.Size := new System.Drawing.Size(891, 525);
         self.ServerTab.TabIndex := 1;
         self.ServerTab.Text := 'Сервер';
         // 
@@ -199,7 +199,7 @@ procedure InitializeComponent;
         // 
         self.splitContainer1.Panel2.Controls.Add(self.ClientControlTab);
         self.splitContainer1.Panel2.RightToLeft := System.Windows.Forms.RightToLeft.No;
-        self.splitContainer1.Size := new System.Drawing.Size(870, 519);
+        self.splitContainer1.Size := new System.Drawing.Size(885, 519);
         self.splitContainer1.SplitterDistance := 258;
         self.splitContainer1.TabIndex := 4;
         // 
@@ -214,7 +214,7 @@ procedure InitializeComponent;
         self.OpenListOfConnectedDevices.ImageAlign := System.Drawing.ContentAlignment.MiddleLeft;
         self.OpenListOfConnectedDevices.ImageKey := 'list1.png';
         self.OpenListOfConnectedDevices.ImageList := self.UIIconList;
-        self.OpenListOfConnectedDevices.Location := new System.Drawing.Point(561, 6);
+        self.OpenListOfConnectedDevices.Location := new System.Drawing.Point(576, 6);
         self.OpenListOfConnectedDevices.Name := 'OpenListOfConnectedDevices';
         self.OpenListOfConnectedDevices.Size := new System.Drawing.Size(305, 38);
         self.OpenListOfConnectedDevices.TabIndex := 5;
@@ -228,7 +228,7 @@ procedure InitializeComponent;
         self.CountOfClientsLabel.Anchor := (System.Windows.Forms.AnchorStyles((System.Windows.Forms.AnchorStyles.Top or System.Windows.Forms.AnchorStyles.Right)));
         self.CountOfClientsLabel.AutoSize := true;
         self.CountOfClientsLabel.Font := new System.Drawing.Font('Microsoft Sans Serif', 11.25, System.Drawing.FontStyle.Bold);
-        self.CountOfClientsLabel.Location := new System.Drawing.Point(606, 53);
+        self.CountOfClientsLabel.Location := new System.Drawing.Point(621, 53);
         self.CountOfClientsLabel.Name := 'CountOfClientsLabel';
         self.CountOfClientsLabel.Size := new System.Drawing.Size(215, 22);
         self.CountOfClientsLabel.TabIndex := 2;
@@ -276,7 +276,7 @@ procedure InitializeComponent;
         self.ClientControlTab.Location := new System.Drawing.Point(0, 0);
         self.ClientControlTab.Name := 'ClientControlTab';
         self.ClientControlTab.SelectedIndex := 0;
-        self.ClientControlTab.Size := new System.Drawing.Size(870, 257);
+        self.ClientControlTab.Size := new System.Drawing.Size(885, 257);
         self.ClientControlTab.TabIndex := 5;
         // 
         // ConsoleTab
@@ -289,7 +289,7 @@ procedure InitializeComponent;
         self.ConsoleTab.Location := new System.Drawing.Point(4, 35);
         self.ConsoleTab.Name := 'ConsoleTab';
         self.ConsoleTab.Padding := new System.Windows.Forms.Padding(3);
-        self.ConsoleTab.Size := new System.Drawing.Size(862, 218);
+        self.ConsoleTab.Size := new System.Drawing.Size(877, 218);
         self.ConsoleTab.TabIndex := 0;
         self.ConsoleTab.Text := 'Консоль';
         self.ConsoleTab.UseVisualStyleBackColor := true;
@@ -312,7 +312,7 @@ procedure InitializeComponent;
         self.ConsoleBox.Multiline := true;
         self.ConsoleBox.Name := 'ConsoleBox';
         self.ConsoleBox.ScrollBars := System.Windows.Forms.ScrollBars.Vertical;
-        self.ConsoleBox.Size := new System.Drawing.Size(852, 208);
+        self.ConsoleBox.Size := new System.Drawing.Size(867, 208);
         self.ConsoleBox.TabIndex := 0;
         self.ConsoleBox.KeyDown += ConsoleBox_KeyDown;
         self.ConsoleBox.MouseDown += ConsoleBox_MouseDown;
@@ -335,7 +335,7 @@ procedure InitializeComponent;
         self.ExplorerTab.Location := new System.Drawing.Point(4, 35);
         self.ExplorerTab.Name := 'ExplorerTab';
         self.ExplorerTab.Padding := new System.Windows.Forms.Padding(3);
-        self.ExplorerTab.Size := new System.Drawing.Size(862, 218);
+        self.ExplorerTab.Size := new System.Drawing.Size(877, 218);
         self.ExplorerTab.TabIndex := 1;
         self.ExplorerTab.Text := 'Проводник';
         // 
@@ -380,7 +380,7 @@ procedure InitializeComponent;
         self.ExplorerPanel.Dock := System.Windows.Forms.DockStyle.Fill;
         self.ExplorerPanel.Location := new System.Drawing.Point(3, 28);
         self.ExplorerPanel.Name := 'ExplorerPanel';
-        self.ExplorerPanel.Size := new System.Drawing.Size(852, 183);
+        self.ExplorerPanel.Size := new System.Drawing.Size(867, 183);
         self.ExplorerPanel.TabIndex := 2;
         self.ExplorerPanel.MouseDown += ExplorerPanel_MouseDown;
         self.ExplorerPanel.Resize += ExplorerPanel_Resize;
@@ -404,79 +404,125 @@ procedure InitializeComponent;
         self.ItemLabel.Text := #13#10#13#10#13#10'файл.pngjd';
         self.ItemLabel.TextAlign := System.Drawing.ContentAlignment.MiddleCenter;
         self.ItemLabel.UseCompatibleTextRendering := true;
+        self.ItemLabel.Leave += ItemLabel_Leave;
         // 
         // FilesIconList
         // 
         self.FilesIconList.ImageStream := (System.Windows.Forms.ImageListStreamer(resources.GetObject('FilesIconList.ImageStream')));
         self.FilesIconList.TransparentColor := System.Drawing.Color.Transparent;
-        self.FilesIconList.Images.SetKeyName(0, 'asp.png');
-        self.FilesIconList.Images.SetKeyName(1, 'avi.png');
-        self.FilesIconList.Images.SetKeyName(2, 'bat.png');
-        self.FilesIconList.Images.SetKeyName(3, 'cmd.png');
-        self.FilesIconList.Images.SetKeyName(4, 'com.png');
-        self.FilesIconList.Images.SetKeyName(5, 'csv.png');
-        self.FilesIconList.Images.SetKeyName(6, 'dir.png');
-        self.FilesIconList.Images.SetKeyName(7, 'dll.png');
-        self.FilesIconList.Images.SetKeyName(8, 'doc.png');
-        self.FilesIconList.Images.SetKeyName(9, 'docx.png');
-        self.FilesIconList.Images.SetKeyName(10, 'exe.png');
-        self.FilesIconList.Images.SetKeyName(11, 'explorer.png');
-        self.FilesIconList.Images.SetKeyName(12, 'file.png');
-        self.FilesIconList.Images.SetKeyName(13, 'gif.png');
-        self.FilesIconList.Images.SetKeyName(14, 'htm.png');
-        self.FilesIconList.Images.SetKeyName(15, 'html.png');
-        self.FilesIconList.Images.SetKeyName(16, 'ico.png');
-        self.FilesIconList.Images.SetKeyName(17, 'ini.png');
-        self.FilesIconList.Images.SetKeyName(18, 'iso.png');
-        self.FilesIconList.Images.SetKeyName(19, 'jar.png');
-        self.FilesIconList.Images.SetKeyName(20, 'jpg.png');
-        self.FilesIconList.Images.SetKeyName(21, 'js.png');
-        self.FilesIconList.Images.SetKeyName(22, 'jsx.png');
-        self.FilesIconList.Images.SetKeyName(23, 'mp3.png');
-        self.FilesIconList.Images.SetKeyName(24, 'mp4.png');
-        self.FilesIconList.Images.SetKeyName(25, 'nfo.png');
-        self.FilesIconList.Images.SetKeyName(26, 'obj.png');
-        self.FilesIconList.Images.SetKeyName(27, 'otf.png');
-        self.FilesIconList.Images.SetKeyName(28, 'pabcproj.png');
-        self.FilesIconList.Images.SetKeyName(29, 'pas.png');
-        self.FilesIconList.Images.SetKeyName(30, 'pdf.png');
-        self.FilesIconList.Images.SetKeyName(31, 'pkg.png');
-        self.FilesIconList.Images.SetKeyName(32, 'png.png');
-        self.FilesIconList.Images.SetKeyName(33, 'ppt.png');
-        self.FilesIconList.Images.SetKeyName(34, 'pptx.png');
-        self.FilesIconList.Images.SetKeyName(35, 'rtf.png');
-        self.FilesIconList.Images.SetKeyName(36, 'terminal.png');
-        self.FilesIconList.Images.SetKeyName(37, 'txt.png');
-        self.FilesIconList.Images.SetKeyName(38, 'wav.png');
-        self.FilesIconList.Images.SetKeyName(39, 'wmv.png');
-        self.FilesIconList.Images.SetKeyName(40, 'xls.png');
-        self.FilesIconList.Images.SetKeyName(41, 'xlsx.png');
-        self.FilesIconList.Images.SetKeyName(42, 'xml.png');
-        self.FilesIconList.Images.SetKeyName(43, 'zip.png');
-        self.FilesIconList.Images.SetKeyName(44, 'Desktop.png');
-        self.FilesIconList.Images.SetKeyName(45, 'Documents.png');
-        self.FilesIconList.Images.SetKeyName(46, 'Downloads.png');
-        self.FilesIconList.Images.SetKeyName(47, 'Music.png');
-        self.FilesIconList.Images.SetKeyName(48, 'Pictures.png');
-        self.FilesIconList.Images.SetKeyName(49, 'User.png');
-        self.FilesIconList.Images.SetKeyName(50, 'drive.png');
-        self.FilesIconList.Images.SetKeyName(51, 'network-drive.png');
-        self.FilesIconList.Images.SetKeyName(52, 'usb-flash-drive.png');
+        self.FilesIconList.Images.SetKeyName(0, 'Desktop.png');
+        self.FilesIconList.Images.SetKeyName(1, 'Documents.png');
+        self.FilesIconList.Images.SetKeyName(2, 'Downloads.png');
+        self.FilesIconList.Images.SetKeyName(3, 'Music.png');
+        self.FilesIconList.Images.SetKeyName(4, 'Pictures.png');
+        self.FilesIconList.Images.SetKeyName(5, 'User.png');
+        self.FilesIconList.Images.SetKeyName(6, 'drive.png');
+        self.FilesIconList.Images.SetKeyName(7, 'network-drive.png');
+        self.FilesIconList.Images.SetKeyName(8, 'usb-flash-drive.png');
+        self.FilesIconList.Images.SetKeyName(9, 'accdb.png');
+        self.FilesIconList.Images.SetKeyName(10, 'asp.png');
+        self.FilesIconList.Images.SetKeyName(11, 'avi.png');
+        self.FilesIconList.Images.SetKeyName(12, 'bak.png');
+        self.FilesIconList.Images.SetKeyName(13, 'bat.png');
+        self.FilesIconList.Images.SetKeyName(14, 'bin.png');
+        self.FilesIconList.Images.SetKeyName(15, 'blend.png');
+        self.FilesIconList.Images.SetKeyName(16, 'c.png');
+        self.FilesIconList.Images.SetKeyName(17, 'c++.png');
+        self.FilesIconList.Images.SetKeyName(18, 'class.png');
+        self.FilesIconList.Images.SetKeyName(19, 'cmd.png');
+        self.FilesIconList.Images.SetKeyName(20, 'com.png');
+        self.FilesIconList.Images.SetKeyName(21, 'cpp.png');
+        self.FilesIconList.Images.SetKeyName(22, 'cs.png');
+        self.FilesIconList.Images.SetKeyName(23, 'css.png');
+        self.FilesIconList.Images.SetKeyName(24, 'csv.png');
+        self.FilesIconList.Images.SetKeyName(25, 'cxx.png');
+        self.FilesIconList.Images.SetKeyName(26, 'dat.png');
+        self.FilesIconList.Images.SetKeyName(27, 'db.png');
+        self.FilesIconList.Images.SetKeyName(28, 'dir.png');
+        self.FilesIconList.Images.SetKeyName(29, 'dll.png');
+        self.FilesIconList.Images.SetKeyName(30, 'doc.png');
+        self.FilesIconList.Images.SetKeyName(31, 'dockerfile.png');
+        self.FilesIconList.Images.SetKeyName(32, 'docx.png');
+        self.FilesIconList.Images.SetKeyName(33, 'exe.png');
+        self.FilesIconList.Images.SetKeyName(34, 'gd.png');
+        self.FilesIconList.Images.SetKeyName(35, 'gif.png');
+        self.FilesIconList.Images.SetKeyName(36, 'go.png');
+        self.FilesIconList.Images.SetKeyName(37, 'gradle.png');
+        self.FilesIconList.Images.SetKeyName(38, 'h.png');
+        self.FilesIconList.Images.SetKeyName(39, 'h++.png');
+        self.FilesIconList.Images.SetKeyName(40, 'hpp.png');
+        self.FilesIconList.Images.SetKeyName(41, 'htm.png');
+        self.FilesIconList.Images.SetKeyName(42, 'html.png');
+        self.FilesIconList.Images.SetKeyName(43, 'hxx.png');
+        self.FilesIconList.Images.SetKeyName(44, 'ico.png');
+        self.FilesIconList.Images.SetKeyName(45, 'ini.png');
+        self.FilesIconList.Images.SetKeyName(46, 'io.png');
+        self.FilesIconList.Images.SetKeyName(47, 'ipynb.png');
+        self.FilesIconList.Images.SetKeyName(48, 'iso.png');
+        self.FilesIconList.Images.SetKeyName(49, 'jar.png');
+        self.FilesIconList.Images.SetKeyName(50, 'java.png');
+        self.FilesIconList.Images.SetKeyName(51, 'jpg.png');
+        self.FilesIconList.Images.SetKeyName(52, 'js.png');
+        self.FilesIconList.Images.SetKeyName(53, 'json.png');
+        self.FilesIconList.Images.SetKeyName(54, 'jsx.png');
+        self.FilesIconList.Images.SetKeyName(55, 'kt.png');
+        self.FilesIconList.Images.SetKeyName(56, 'lnk.png');
+        self.FilesIconList.Images.SetKeyName(57, 'lua.png');
+        self.FilesIconList.Images.SetKeyName(58, 'mp3.png');
+        self.FilesIconList.Images.SetKeyName(59, 'mp4.png');
+        self.FilesIconList.Images.SetKeyName(60, 'nfo.png');
+        self.FilesIconList.Images.SetKeyName(61, 'obj.png');
+        self.FilesIconList.Images.SetKeyName(62, 'otf.png');
+        self.FilesIconList.Images.SetKeyName(63, 'pabcproj.png');
+        self.FilesIconList.Images.SetKeyName(64, 'pak.png');
+        self.FilesIconList.Images.SetKeyName(65, 'pas.png');
+        self.FilesIconList.Images.SetKeyName(66, 'pdb.png');
+        self.FilesIconList.Images.SetKeyName(67, 'pdf.png');
+        self.FilesIconList.Images.SetKeyName(68, 'php.png');
+        self.FilesIconList.Images.SetKeyName(69, 'pkg.png');
+        self.FilesIconList.Images.SetKeyName(70, 'png.png');
+        self.FilesIconList.Images.SetKeyName(71, 'ppt.png');
+        self.FilesIconList.Images.SetKeyName(72, 'pptx.png');
+        self.FilesIconList.Images.SetKeyName(73, 'prettierrc.png');
+        self.FilesIconList.Images.SetKeyName(74, 'ps1.png');
+        self.FilesIconList.Images.SetKeyName(75, 'py.png');
+        self.FilesIconList.Images.SetKeyName(76, 'rs.png');
+        self.FilesIconList.Images.SetKeyName(77, 'rtf.png');
+        self.FilesIconList.Images.SetKeyName(78, 'scss.png');
+        self.FilesIconList.Images.SetKeyName(79, 'sln.png');
+        self.FilesIconList.Images.SetKeyName(80, 'ts.png');
+        self.FilesIconList.Images.SetKeyName(81, 'txt.png');
+        self.FilesIconList.Images.SetKeyName(82, 'vim.png');
+        self.FilesIconList.Images.SetKeyName(83, 'vite.png');
+        self.FilesIconList.Images.SetKeyName(84, 'vsix.png');
+        self.FilesIconList.Images.SetKeyName(85, 'vue.png');
+        self.FilesIconList.Images.SetKeyName(86, 'wav.png');
+        self.FilesIconList.Images.SetKeyName(87, 'wmv.png');
+        self.FilesIconList.Images.SetKeyName(88, 'xls.png');
+        self.FilesIconList.Images.SetKeyName(89, 'xlsx.png');
+        self.FilesIconList.Images.SetKeyName(90, 'xml.png');
+        self.FilesIconList.Images.SetKeyName(91, 'zip.png');
+        self.FilesIconList.Images.SetKeyName(92, 'file.png');
         // 
         // ExplorerToolBar
         // 
+        self.ExplorerToolBar.AllowMerge := false;
         self.ExplorerToolBar.BackColor := System.Drawing.SystemColors.AppWorkspace;
-        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[6](self.ExplorerHomeBtn, self.ExplorerToolBarButtonUp, self.ExplorerPathLabel, self.ExplorerItemsUpdateButton, self.SelectAllItems, self.toolStripButton2));
+        self.ExplorerToolBar.CanOverflow := false;
+        self.ExplorerToolBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[6](self.ExplorerHomeBtn, self.ExplorerToolBarButtonUp, self.ExplorerPathLabel, self.ExplorerItemsUpdateButton, self.SelectAllItems, self.PasteSelectedBtn));
+        self.ExplorerToolBar.LayoutStyle := System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
         self.ExplorerToolBar.Location := new System.Drawing.Point(3, 3);
         self.ExplorerToolBar.MaximumSize := new System.Drawing.Size(0, 25);
         self.ExplorerToolBar.Name := 'ExplorerToolBar';
         self.ExplorerToolBar.Padding := new System.Windows.Forms.Padding(0, 0, 5, 0);
-        self.ExplorerToolBar.Size := new System.Drawing.Size(852, 25);
+        self.ExplorerToolBar.Size := new System.Drawing.Size(867, 25);
         self.ExplorerToolBar.TabIndex := 0;
+        self.ExplorerToolBar.Resize += ExplorerToolBar_Resize;
         // 
         // ExplorerHomeBtn
         // 
         self.ExplorerHomeBtn.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerHomeBtn.AutoSize := false;
         self.ExplorerHomeBtn.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
         self.ExplorerHomeBtn.Image := (System.Drawing.Image(resources.GetObject('ExplorerHomeBtn.Image')));
         self.ExplorerHomeBtn.ImageTransparentColor := System.Drawing.Color.Magenta;
@@ -490,32 +536,38 @@ procedure InitializeComponent;
         // ExplorerToolBarButtonUp
         // 
         self.ExplorerToolBarButtonUp.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerToolBarButtonUp.AutoSize := false;
         self.ExplorerToolBarButtonUp.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
         self.ExplorerToolBarButtonUp.Image := (System.Drawing.Image(resources.GetObject('ExplorerToolBarButtonUp.Image')));
         self.ExplorerToolBarButtonUp.ImageTransparentColor := System.Drawing.Color.Transparent;
         self.ExplorerToolBarButtonUp.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
         self.ExplorerToolBarButtonUp.Name := 'ExplorerToolBarButtonUp';
+        self.ExplorerToolBarButtonUp.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
         self.ExplorerToolBarButtonUp.Size := new System.Drawing.Size(23, 22);
         self.ExplorerToolBarButtonUp.ToolTipText := 'Перейти в верхнюю директорию';
         self.ExplorerToolBarButtonUp.Click += ExplorerToolBarButtonUp_Click;
         // 
         // ExplorerPathLabel
         // 
+        self.ExplorerPathLabel.AutoSize := false;
         self.ExplorerPathLabel.AutoToolTip := true;
         self.ExplorerPathLabel.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+        self.ExplorerPathLabel.DoubleClickEnabled := true;
         self.ExplorerPathLabel.Name := 'ExplorerPathLabel';
         self.ExplorerPathLabel.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
-        self.ExplorerPathLabel.Size := new System.Drawing.Size(0, 22);
-        self.ExplorerPathLabel.ToolTipText := 'Путь, по которой вы сейчас находитесь';
+        self.ExplorerPathLabel.Size := new System.Drawing.Size(700, 22);
+        self.ExplorerPathLabel.DoubleClick += ExplorerPathLabel_DoubleClick;
         // 
         // ExplorerItemsUpdateButton
         // 
         self.ExplorerItemsUpdateButton.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.ExplorerItemsUpdateButton.AutoSize := false;
         self.ExplorerItemsUpdateButton.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
         self.ExplorerItemsUpdateButton.Image := (System.Drawing.Image(resources.GetObject('ExplorerItemsUpdateButton.Image')));
         self.ExplorerItemsUpdateButton.ImageTransparentColor := System.Drawing.Color.Magenta;
         self.ExplorerItemsUpdateButton.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
         self.ExplorerItemsUpdateButton.Name := 'ExplorerItemsUpdateButton';
+        self.ExplorerItemsUpdateButton.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
         self.ExplorerItemsUpdateButton.Size := new System.Drawing.Size(23, 22);
         self.ExplorerItemsUpdateButton.ToolTipText := 'Обновить';
         self.ExplorerItemsUpdateButton.MouseDown += __update_MouseDown;
@@ -523,26 +575,30 @@ procedure InitializeComponent;
         // SelectAllItems
         // 
         self.SelectAllItems.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.SelectAllItems.AutoSize := false;
         self.SelectAllItems.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
         self.SelectAllItems.Image := (System.Drawing.Image(resources.GetObject('SelectAllItems.Image')));
         self.SelectAllItems.ImageTransparentColor := System.Drawing.Color.Magenta;
         self.SelectAllItems.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
         self.SelectAllItems.Name := 'SelectAllItems';
+        self.SelectAllItems.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
         self.SelectAllItems.Size := new System.Drawing.Size(23, 22);
         self.SelectAllItems.ToolTipText := 'Выбрать всё';
         self.SelectAllItems.Click += __select_all_Click;
         // 
-        // toolStripButton2
+        // PasteSelectedBtn
         // 
-        self.toolStripButton2.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
-        self.toolStripButton2.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-        self.toolStripButton2.Image := (System.Drawing.Image(resources.GetObject('toolStripButton2.Image')));
-        self.toolStripButton2.ImageTransparentColor := System.Drawing.Color.Magenta;
-        self.toolStripButton2.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
-        self.toolStripButton2.Name := 'toolStripButton2';
-        self.toolStripButton2.Size := new System.Drawing.Size(23, 22);
-        self.toolStripButton2.ToolTipText := 'Вставить';
-        self.toolStripButton2.MouseDown += __paste_MouseDown;
+        self.PasteSelectedBtn.Alignment := System.Windows.Forms.ToolStripItemAlignment.Right;
+        self.PasteSelectedBtn.AutoSize := false;
+        self.PasteSelectedBtn.DisplayStyle := System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+        self.PasteSelectedBtn.Image := (System.Drawing.Image(resources.GetObject('PasteSelectedBtn.Image')));
+        self.PasteSelectedBtn.ImageTransparentColor := System.Drawing.Color.Magenta;
+        self.PasteSelectedBtn.Margin := new System.Windows.Forms.Padding(3, 1, 0, 2);
+        self.PasteSelectedBtn.Name := 'PasteSelectedBtn';
+        self.PasteSelectedBtn.Overflow := System.Windows.Forms.ToolStripItemOverflow.Never;
+        self.PasteSelectedBtn.Size := new System.Drawing.Size(23, 22);
+        self.PasteSelectedBtn.ToolTipText := 'Вставить';
+        self.PasteSelectedBtn.MouseDown += __paste_MouseDown;
         // 
         // SettingsTab
         // 
@@ -553,7 +609,7 @@ procedure InitializeComponent;
         self.SettingsTab.Location := new System.Drawing.Point(4, 32);
         self.SettingsTab.Name := 'SettingsTab';
         self.SettingsTab.Padding := new System.Windows.Forms.Padding(3);
-        self.SettingsTab.Size := new System.Drawing.Size(854, 441);
+        self.SettingsTab.Size := new System.Drawing.Size(876, 525);
         self.SettingsTab.TabIndex := 2;
         self.SettingsTab.Text := 'Настройки';
         // 
@@ -576,9 +632,9 @@ procedure InitializeComponent;
         // CopyrightText
         // 
         self.CopyrightText.Dock := System.Windows.Forms.DockStyle.Bottom;
-        self.CopyrightText.Location := new System.Drawing.Point(3, 414);
+        self.CopyrightText.Location := new System.Drawing.Point(3, 498);
         self.CopyrightText.Name := 'CopyrightText';
-        self.CopyrightText.Size := new System.Drawing.Size(848, 24);
+        self.CopyrightText.Size := new System.Drawing.Size(870, 24);
         self.CopyrightText.TabIndex := 0;
         self.CopyrightText.Text := 'Copyright © 2025-2099 by Kertov Islam M. All Rights Reserved. ';
         // 
@@ -636,11 +692,11 @@ procedure InitializeComponent;
         // 
         // MainWindow
         // 
-        self.ClientSize := new System.Drawing.Size(884, 561);
+        self.ClientSize := new System.Drawing.Size(899, 561);
         self.Controls.Add(self.DefaultTab);
         self.Font := new System.Drawing.Font('Microsoft Sans Serif', 15.75, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, (System.Byte(204)));
         self.Icon := (System.Drawing.Icon(resources.GetObject('$this.Icon')));
-        self.MinimumSize := new System.Drawing.Size(900, 600);
+        self.MinimumSize := new System.Drawing.Size(915, 600);
         self.Name := 'MainWindow';
         self.Text := 'Remote Control';
         self.FormClosing += MainWindow_FormClosing;

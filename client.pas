@@ -99,16 +99,14 @@ type
     
     public procedure KillAllServices();
     begin
-      // Устанавливаем флаг остановки
       AppIsRunning := false;
       
-      // Ждем завершения всех потоков
       foreach var service in [self._message_handler_service] do
       begin
         if (service <> nil) and service.IsAlive then begin
-          service.Join(1000); // Даем 1 секунду на завершение
+          service.Join(1000); 
           if service.IsAlive then
-            service.Abort(); // Принудительное завершение, если не ответил
+            service.Abort();
         end;
       end;
       
@@ -180,6 +178,7 @@ type
       stream.Close();
       
     end;
+
     
     /// Обработка полученных запросов от консоли
     public function ConsoleHandler(msg: string): string;
@@ -283,7 +282,7 @@ type
             responce := 'Копирование прошло успешно';
           end;
         end;{$endregion}
-        E_DELETE_ITEM: {$region Удаление файло}
+        E_DELETE_ITEM: {$region Удаление файлов}
         begin
           var items_path: string = msg.Substring(4, msg.IndexOf('[')-4) + SLASH;
           var JsonObjectStr := msg.Substring(msg.IndexOf('['));
@@ -291,7 +290,7 @@ type
           foreach var item in items do
             if Directory.Exists(items_path+item) then begin
               cmd.RMDIR(items_path+item);
-              Println(items_path+item);
+              // Println(items_path+item);
               end else
               System.IO.File.Delete(items_path+item);
           responce := 'Удаление прошло успешно';
@@ -315,6 +314,15 @@ type
           except on e: Exception do
             responce := E_ERROR_RENAME + e.Message;
           end;
+        end;
+        E_RENAME_PATH:
+        begin
+          var newPath := msg.Substring(4);
+          if Directory.Exists(newPath) then begin
+            self.epath := newPath;
+            responce := 'Путь обновлён';
+          end else 
+            responce := E_ERROR_RENAME_PATH;
         end;
       
       end; // case

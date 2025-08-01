@@ -105,7 +105,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------- //
-procedure ErrorHandler(error: string);
+async procedure ErrorHandler(error: string);
 begin
   new Notification(error);
 end;

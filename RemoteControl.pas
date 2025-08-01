@@ -47,7 +47,7 @@ begin
     Marshal.Copy(pData, buf, 0, size);
 
     &File.WriteAllBytes(outPath, buf);
-    Writeln('✅ Ресурс успешно извлечён в файл: ' + outPath);
+    Writeln('✅ Ресурс успешно извлечён');
   finally
     Marshal.FreeHGlobal(namePtr);
   end;
